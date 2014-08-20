@@ -1,0 +1,45 @@
+
+apply plugin: 'application'
+apply plugin: 'eclipse'
+
+mainClassName = 'com.scache.sencrypt.util.CouchbaseUtils'
+
+repositories {
+	mavenCentral()
+}
+
+
+dependencies {
+	
+	compile group:'junit', name:'junit', version:'4.11'
+	compile group:'com.couchbase.client', name:'couchbase-client', version:'1.4.4'
+	compile group:'com.google.code.gson', name:'gson', version:'2.3'
+	compile group:'net.spy', name:'spymemcached', version:'2.11.4'
+	
+	compile group:'org.codehaus.jettison', name:'jettison', version:'1.1'
+	compile group:'io.netty', name:'netty', version:'3.5.5.Final'
+	compile group:'commons-codec', name:'commons-codec', version:'1.5'
+	compile group:'org.apache.httpcomponents', name:'httpcore', version:'4.3-alpha1'
+	compile group:'org.apache.httpcomponents', name:'httpcore-nio', version:'4.3-beta2'
+	
+	compile group:'org.apache.tomcat', name: 'tomcat-catalina', version:'7.0.42'
+	
+	compile group: 'org.apache.logging.log4j', name: 'log4j-api', version: '2.0.1'
+	compile group: 'org.apache.logging.log4j', name: 'log4j-core', version: '2.0.1'
+
+	testCompile group: 'org.mockito', name: 'mockito-all', version:'1.9.5'
+}
+
+task jarWithDependencies(type: Jar) {
+	archiveName 'couchbase.jar'
+	classifier 'jar-with-dependencies'
+	from files(sourceSets.main.output)
+	from configurations.runtime.collect { zipTree(it) }
+
+	manifest { attributes 'Main-Class': mainClassName }
+}
+
+artifacts {
+	archives jarWithDependencies
+}
+
