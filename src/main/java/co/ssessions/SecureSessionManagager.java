@@ -22,7 +22,7 @@ public class SecureSessionManagager extends PersistentManagerBase {
     protected String privateKeyFilePath;
     protected int maximumInactiveInterval = 60 * 60 * 2; //2 hours
     protected int maximumIdleBackup = 30; // 30 seconds
-    
+    protected String applicationId = null;
     
     
 	public SecureSessionManagager() {
@@ -113,6 +113,11 @@ public class SecureSessionManagager extends PersistentManagerBase {
 
 	public void setCryptoService(CryptoService cryptoService) {
 		this.cryptoService = cryptoService;
+	}
+
+
+	public void setApplicationId(String applicationId) {
+		this.applicationId = applicationId;
 	}
 
 	

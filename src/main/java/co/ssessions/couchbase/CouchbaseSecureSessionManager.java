@@ -30,6 +30,7 @@ public class CouchbaseSecureSessionManager extends SecureSessionManagager {
 	
 	
 	public CouchbaseSecureSessionManager() {
+		
 		super();
 		
 		this.couchBaseSessionStore = new CouchbaseSessionStore();
@@ -69,6 +70,7 @@ public class CouchbaseSecureSessionManager extends SecureSessionManagager {
 		
 		this.couchBaseSessionStore.setCouchbaseClient(this.couchbaseClient);
 		this.couchBaseSessionStore.setCryptoService(this.cryptoService);
+		this.couchBaseSessionStore.setApplicationId(this.applicationId);
 		
 		
 	} // END initInternal Method

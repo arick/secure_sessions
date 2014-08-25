@@ -52,7 +52,7 @@ public class PKCS8CryptoService implements CryptoService {
 				privateKeyStringBuffer.append(privateKeyLine);
 			}
 			String privateKeyString = privateKeyStringBuffer.toString();
-			
+			privateKeyBufferedReader.close();
 			
 			privateKeyString = privateKeyString.replace("-----BEGIN PRIVATE KEY-----", "");
 			privateKeyString = privateKeyString.replace("-----END PRIVATE KEY-----", "");
@@ -84,7 +84,6 @@ public class PKCS8CryptoService implements CryptoService {
 		
 		PublicKey publicKey = null;
 		
-		// Extract the PublicKey from the PrivateKey
     	try {
     		
 			RSAPrivateCrtKey privateCrtKey = (RSAPrivateCrtKey) privateKey;
@@ -178,6 +177,9 @@ public class PKCS8CryptoService implements CryptoService {
 	}
 
 
+	/* (non-Javadoc)
+	 * @see co.ssessions.crypto.CryptoService#encrypt(byte[])
+	 */
 	@Override
 	public byte[] encrypt(byte[] contentBytes) {
 		

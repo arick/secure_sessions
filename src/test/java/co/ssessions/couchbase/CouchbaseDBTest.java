@@ -10,11 +10,13 @@ import java.util.List;
 import java.util.Set;
 
 import junit.framework.TestCase;
+import net.spy.memcached.PersistTo;
 
 import org.junit.Test;
 
 import co.ssessions.SessionKey;
 import co.ssessions.SessionModel;
+import co.ssessions.conf.EnvConfig;
 import co.ssessions.json.DateJsonDeserializer;
 import co.ssessions.json.DateJsonSerializer;
 
@@ -33,16 +35,19 @@ public class CouchbaseDBTest extends TestCase {
 		
 		List<URI> hosts = new ArrayList<URI>();
         try {
-			hosts.add(new URI("http://54.210.195.85:8091/pools"));
+        	String[] hostStringArray = EnvConfig.getStringArray("couchbase.hosts");
+        	for (String hostString : hostStringArray) {
+        		hosts.add(new URI(hostString));
+        	}
 		} catch (URISyntaxException use) {
 			use.printStackTrace();
 		}
         
         // Name of the Bucket to connect to
-        String bucket = "default";
+        String bucket = EnvConfig.getSafe("couchbase.bucket");
         
         // Password of the bucket (empty) string if none
-        String password = "";
+        String password = EnvConfig.getSafe("couchbase.password");
         
         // Connect to the Cluster
 		try {
@@ -131,7 +136,7 @@ public class CouchbaseDBTest extends TestCase {
 		String sessionModelJson = gson.toJson(sessionModel);
 		
 		// Put SessionJSON into the database
-		this.couchbaseClient.set(sessionKey.toString(), sessionModelJson);
+		this.couchbaseClient.set(sessionKey.toString(), sessionModelJson, PersistTo.ONE);
 		
 		// Ensure that it really is in the database
 		String sessionModelJsonFromDB = (String) this.couchbaseClient.get(sessionKey.toString());
@@ -174,9 +179,9 @@ public class CouchbaseDBTest extends TestCase {
 		String sessionModelJson = gson.toJson(sessionModel);
 		
 		// Put SessionJSON into the database
-		this.couchbaseClient.set(sessionKey1.toString(), sessionModelJson);
-		this.couchbaseClient.set(sessionKey2.toString(), sessionModelJson);
-		this.couchbaseClient.set(sessionKey3.toString(), sessionModelJson);
+		this.couchbaseClient.set(sessionKey1.toString(), sessionModelJson, PersistTo.ONE);
+		this.couchbaseClient.set(sessionKey2.toString(), sessionModelJson, PersistTo.ONE);
+		this.couchbaseClient.set(sessionKey3.toString(), sessionModelJson, PersistTo.ONE);
 		
 		// Ensure that it really is in the database
 		String sessionModelJsonFromDB1 = (String) this.couchbaseClient.get(sessionKey1.toString());
@@ -230,7 +235,7 @@ public class CouchbaseDBTest extends TestCase {
 		String sessionModelJson = gson.toJson(sessionModel);
 		
 		// Put SessionJSON into the database
-		this.couchbaseClient.set(sessionKey.toString(), sessionModelJson);
+		this.couchbaseClient.set(sessionKey.toString(), sessionModelJson, PersistTo.ONE);
 		
 		// Ensure that it really is in the database
 		String sessionModelJsonFromDB = (String) this.couchbaseClient.get(sessionKey.toString());
@@ -279,10 +284,10 @@ public class CouchbaseDBTest extends TestCase {
 		String sessionModelJson = gson.toJson(sessionModel);
 		
 		// Put SessionJSON into the database
-		this.couchbaseClient.set(sessionKey1.toString(), sessionModelJson);
-		this.couchbaseClient.set(sessionKey2.toString(), sessionModelJson);
-		this.couchbaseClient.set(sessionKey3.toString(), sessionModelJson);
-		this.couchbaseClient.set(sessionKey4.toString(), sessionModelJson);
+		this.couchbaseClient.set(sessionKey1.toString(), sessionModelJson, PersistTo.ONE);
+		this.couchbaseClient.set(sessionKey2.toString(), sessionModelJson, PersistTo.ONE);
+		this.couchbaseClient.set(sessionKey3.toString(), sessionModelJson, PersistTo.ONE);
+		this.couchbaseClient.set(sessionKey4.toString(), sessionModelJson, PersistTo.ONE);
 		
 		// Ensure that it really is in the database
 		String sessionModelJsonFromDB1 = (String) this.couchbaseClient.get(sessionKey1.toString());
@@ -334,10 +339,10 @@ public class CouchbaseDBTest extends TestCase {
 		String sessionModelJson = gson.toJson(sessionModel);
 		
 		// Put SessionJSON into the database
-		this.couchbaseClient.set(sessionKey1.toString(), sessionModelJson);
-		this.couchbaseClient.set(sessionKey2.toString(), sessionModelJson);
-		this.couchbaseClient.set(sessionKey3.toString(), sessionModelJson);
-		this.couchbaseClient.set(sessionKey4.toString(), sessionModelJson);
+		this.couchbaseClient.set(sessionKey1.toString(), sessionModelJson, PersistTo.ONE);
+		this.couchbaseClient.set(sessionKey2.toString(), sessionModelJson, PersistTo.ONE);
+		this.couchbaseClient.set(sessionKey3.toString(), sessionModelJson, PersistTo.ONE);
+		this.couchbaseClient.set(sessionKey4.toString(), sessionModelJson, PersistTo.ONE);
 		
 		// Ensure that it really is in the database
 		String sessionModelJsonFromDB1 = (String) this.couchbaseClient.get(sessionKey1.toString());

@@ -152,7 +152,7 @@ public class PKITest {
 		try {
 			
 			String content = "This is really cool";
-			String privateKeyFilePath = "src/resources/privkey.pkcs8.pem";
+			String privateKeyFilePath = "src/test/resources/crypto/privkey.pkcs8.pem";
 			
 			CryptoService cryptoService = new PKCS8CryptoService(privateKeyFilePath);
 			

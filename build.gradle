@@ -22,12 +22,24 @@ dependencies {
 	compile group:'org.apache.httpcomponents', name:'httpcore', version:'4.3-alpha1'
 	compile group:'org.apache.httpcomponents', name:'httpcore-nio', version:'4.3-beta2'
 	
-	compile group:'org.apache.tomcat', name: 'tomcat-catalina', version:'7.0.42'
+	compile group:'org.apache.tomcat', name: 'tomcat-catalina', version:'7.0.41'
 	
-	compile group: 'org.apache.logging.log4j', name: 'log4j-api', version: '2.0.1'
-	compile group: 'org.apache.logging.log4j', name: 'log4j-core', version: '2.0.1'
-
-	testCompile group: 'org.mockito', name: 'mockito-all', version:'1.9.5'
+	compile group:'org.apache.logging.log4j', name: 'log4j-api', version: '2.0.1'
+	compile group:'org.apache.logging.log4j', name: 'log4j-core', version: '2.0.1'
+	compile group:'org.apache.commons', name:'commons-lang3', version:'3.0'
+	compile group:'com.google.guava', name:'guava', version:'17.0'
+	compile group:'com.google.inject', name:'guice-parent', version:'3.0'
+	
+	
+	compile group:'commons-configuration', name:'commons-configuration', version:'1.10'
+	
+	
+	testCompile group:'org.mockito', name: 'mockito-all', version:'1.9.5'
+	testCompile group:'org.springframework', name:'spring-test', version:'4.0.6.RELEASE'  // Deprecated
+	testCompile group:'org.apache.tomcat', name:'tomcat-util', version:'7.0.41'
+	testCompile group:'org.apache.tomcat.embed', name:'tomcat-embed-core', version:'7.0.41'
+	
+	
 }
 
 task jarWithDependencies(type: Jar) {

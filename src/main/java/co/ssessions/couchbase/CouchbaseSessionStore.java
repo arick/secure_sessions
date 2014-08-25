@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.util.Base64;
 import java.util.Collections;
+import java.util.Date;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -19,19 +20,21 @@ import org.apache.catalina.Session;
 import org.apache.catalina.session.StandardSession;
 import org.apache.catalina.session.StoreBase;
 import org.apache.catalina.util.CustomObjectInputStream;
+import org.apache.commons.lang3.StringUtils;
 
 import co.ssessions.SessionKey;
 import co.ssessions.SessionModel;
 import co.ssessions.crypto.CryptoService;
+import co.ssessions.util.SecureSessionsConstants;
 
 import com.couchbase.client.CouchbaseClient;
 
 public class CouchbaseSessionStore extends StoreBase {
 	
 	private static final String name = "CouchbaseSessionStore";
-    private static final String info = name + "/1.0";
+	private static final String info = name + "/1.0";
 	
-    private Set<String> keys = Collections.synchronizedSet(new HashSet<String>());
+	private Set<String> keys = Collections.synchronizedSet(new HashSet<String>());
 	
 	protected CouchbaseClient couchbaseClient;
 	protected String applicationId;
@@ -56,50 +59,60 @@ public class CouchbaseSessionStore extends StoreBase {
 	
 	@Override
 	public String[] keys() throws IOException {
-		return keys.toArray(new String[0]);
+		return this.keys.toArray(new String[0]);
 	}
 
 	
 	@Override
 	public Session load(String id) throws ClassNotFoundException, IOException {
 		
-		
 		SessionKey sessionKey = new SessionKey(this.applicationId, id);
 		SessionModel sessionModel = CouchbaseDB.retrieveSession(this.couchbaseClient, sessionKey);
 		
-		String encryptedSessionDataBase64String = (String) sessionModel.getData();
-		byte[] encryptedSessionDataBytes = Base64.getDecoder().decode(encryptedSessionDataBase64String);
+		StandardSession session = (StandardSession) this.getManager().createSession(id);
 		
+		// If there is not a SessionModel for this user then do not try to unpack it...
+		if (sessionModel != null) {
+			
+			String encryptedSessionDataBase64String = (String) sessionModel.getData();
+			byte[] encryptedSessionDataBytes = Base64.getDecoder().decode(encryptedSessionDataBase64String);
+			
+			
+			/*
+			 * Decrypt Session Data
+			 */
+			byte[] decryptedSessionDataBytes = this.cryptoService.decrypt(encryptedSessionDataBytes);
+			
+			ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(decryptedSessionDataBytes);
+			
+			Object httpSessionMapObject = null;
+			CustomObjectInputStream customObjectInputStream = null;
+			
+			Container container = this.getManager().getContainer();
+			customObjectInputStream = new CustomObjectInputStream(byteArrayInputStream, container.getLoader().getClassLoader());
+			httpSessionMapObject = customObjectInputStream.readObject();
+			customObjectInputStream.close();
+			
+			if (httpSessionMapObject instanceof Map<?, ?>) {
+				Map<String, Object> sessionAttributeMap = (Map<String, Object>) httpSessionMapObject;
+				
+				for (String attributeKey : sessionAttributeMap.keySet()) {
+					session.setAttribute(attributeKey, sessionAttributeMap.get(attributeKey));
+				}
+				
+			} else {
+				throw new RuntimeException("Error: Unable to unmarshall session attributes from Couchbase database");
+			}
 		
-		/*
-		 * Decrypt Session Data
-		 */
-		byte[] decryptedSessionDataBytes = this.cryptoService.decrypt(encryptedSessionDataBytes);
+		} // END if (sessionModel != null) Method
 		
-		ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(decryptedSessionDataBytes);
+		Date timeStampDate = new Date();
+		session.setAttribute(SecureSessionsConstants.CREATE_TIME_SESSION_MAP_KEY, (sessionModel != null) ? sessionModel.getCreateTime().getTime() : timeStampDate.getTime());
+		session.setAttribute(SecureSessionsConstants.UPDATE_TIME_SESSION_MAP_KEY, (sessionModel != null) ? sessionModel.getUpdateTime().getTime() : timeStampDate.getTime());
 		
-		Object httpSessionMapObject = null;
-		CustomObjectInputStream customObjectInputStream = null;
-		
-		Container container = this.getManager().getContainer();
-		customObjectInputStream = new CustomObjectInputStream(byteArrayInputStream, container.getLoader().getClassLoader());
-		httpSessionMapObject = customObjectInputStream.readObject();
-		customObjectInputStream.close();
-		
-		Session session = this.getManager().createSession(id);
-		
-		if (httpSessionMapObject instanceof Map<?, ?>) {
-            Map<String, Object> sessionAttributeMap = (Map<String, Object>) httpSessionMapObject;
-
-            for (String attributeKey : sessionAttributeMap.keySet()) {
-                ((StandardSession)session).setAttribute(attributeKey, sessionAttributeMap.get(attributeKey));
-            }
-        } else {
-            throw new RuntimeException("Error: Unable to unmarshall session attributes from Couchbase database");
-        }
 		
 		this.manager.add(session);
-        this.keys.add(sessionKey.toString());
+		this.keys.add(sessionKey.getSessionId());
 		
 		return session;
 	}
@@ -110,7 +123,7 @@ public class CouchbaseSessionStore extends StoreBase {
 		
 		SessionKey sessionKey = new SessionKey(this.applicationId, id);
 		CouchbaseDB.deleteSession(this.couchbaseClient, sessionKey);
-        this.keys.remove(sessionKey.toString());
+		this.keys.remove(sessionKey.getSessionId());
 	}
 
 	
@@ -119,7 +132,7 @@ public class CouchbaseSessionStore extends StoreBase {
 		
 		Set<SessionKey> sessionKeys = new HashSet<SessionKey>();
 		for (String key: this.keys) {
-			sessionKeys.add(new SessionKey().fromString(key));
+			sessionKeys.add(new SessionKey(this.applicationId, key));
 		}
 
 		CouchbaseDB.deleteSessions(this.couchbaseClient, sessionKeys);
@@ -147,6 +160,15 @@ public class CouchbaseSessionStore extends StoreBase {
 			sessionDataMap.put(attributeName, attributeValue);
 		}
 
+		Date dateNow = new Date();
+		sessionModel.setUpdateTime(dateNow);
+		if (sessionDataMap.get(SecureSessionsConstants.CREATE_TIME_SESSION_MAP_KEY) == null) {
+			sessionModel.setCreateTime(dateNow);
+		} else {
+			sessionModel.setCreateTime(new Date((long) sessionDataMap.get(SecureSessionsConstants.CREATE_TIME_SESSION_MAP_KEY)));
+		}
+		
+		
 		ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
 		ObjectOutputStream objectOutputStream = new ObjectOutputStream(byteArrayOutputStream);
 		objectOutputStream.writeObject(sessionDataMap);
@@ -166,7 +188,7 @@ public class CouchbaseSessionStore extends StoreBase {
 		
 		CouchbaseDB.storeSession(this.couchbaseClient, sessionKey, sessionModel);
 		
-        this.keys.add(sessionKey.toString());
+		this.keys.add(sessionKey.getSessionId());
 	}
 	
 	
