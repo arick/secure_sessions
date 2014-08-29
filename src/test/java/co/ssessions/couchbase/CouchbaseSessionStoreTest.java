@@ -1,81 +1,51 @@
 package co.ssessions.couchbase;
 
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
 import java.io.File;
-import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.Base64;
-import java.util.Date;
-import java.util.List;
-import java.util.Vector;
-
-import javax.servlet.ServletContext;
-import javax.servlet.http.HttpSession;
 
 import junit.framework.TestCase;
-import net.spy.memcached.PersistTo;
 
-import org.apache.catalina.Container;
 import org.apache.catalina.Context;
 import org.apache.catalina.LifecycleException;
-import org.apache.catalina.Loader;
-import org.apache.catalina.Manager;
-import org.apache.catalina.Session;
-import org.apache.catalina.session.StandardSession;
-import org.apache.catalina.session.StandardSessionFacade;
 import org.apache.catalina.startup.Tomcat;
 import org.junit.Test;
-import org.springframework.mock.web.MockHttpSession;
-import org.springframework.mock.web.MockServletContext;
 
-import co.ssessions.SessionKey;
-import co.ssessions.SessionModel;
 import co.ssessions.conf.EnvConfig;
+import co.ssessions.conf.EnvironmentConfiguration;
 import co.ssessions.crypto.CryptoService;
-import co.ssessions.crypto.PKCS8CryptoService;
-import co.ssessions.json.DateJsonDeserializer;
-import co.ssessions.json.DateJsonSerializer;
+import co.ssessions.modules.CouchbaseSecureSessionsModule;
+import co.ssessions.store.SecureSessionsStoreBase;
 import co.ssessions.testSupport.embeddedTomcat.DatePrintServlet;
 
 import com.couchbase.client.CouchbaseClient;
-import com.couchbase.client.CouchbaseConnectionFactory;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
 
 public class CouchbaseSessionStoreTest extends TestCase {
 
 	CouchbaseClient couchbaseClient = null;
+	CryptoService cryptoService = null;
+	Injector injector = null;
+	SecureSessionsStoreBase secureSessionsStoreBase = null;
 
 	public void setUp() {
-
-		List<URI> hosts = new ArrayList<URI>();
-		try {
-			String[] hostStringArray = EnvConfig.getStringArray("couchbase.hosts");
-			for (String hostString : hostStringArray) {
-				hosts.add(new URI(hostString));
-			}
-		} catch (URISyntaxException use) {
-			use.printStackTrace();
-		}
-
-        // Name of the Bucket to connect to
-        String bucket = EnvConfig.getSafe("couchbase.bucket");
-        
-        // Password of the bucket (empty) string if none
-        String password = EnvConfig.getSafe("couchbase.password");
-
-		// Connect to the Cluster
-		try {
-			CouchbaseConnectionFactory cf = new CouchbaseConnectionFactory(hosts, bucket, password);
-			this.couchbaseClient = new CouchbaseClient(cf);
-
-		} catch (IOException ioe) {
-			ioe.printStackTrace();
-		}
+		
+		EnvironmentConfiguration.load("couchbase_manager_conf.properties");
+		
+		this.injector = Guice.createInjector(new CouchbaseSecureSessionsModule());
+		CouchbaseClientHolder cch = this.injector.getInstance(CouchbaseClientHolder.class);
+		
+		assertNotNull(cch);
+		
+		CouchbaseClient client = cch.getInstance();
+		
+		assertNotNull(client);
+		assertTrue(client instanceof CouchbaseClient);
+		
+		this.couchbaseClient = client;
+//		this.cryptoService = this.injector.getInstance(CryptoService.class);
+		
+		this.secureSessionsStoreBase = this.injector.getInstance(SecureSessionsStoreBase.class);
+		
 	} // END setUp Method
 
 	
@@ -85,18 +55,13 @@ public class CouchbaseSessionStoreTest extends TestCase {
 			Tomcat tomcat = new Tomcat();
 			tomcat.setPort(8080);
 
-			File base = new File("src/test/resources/embedded_tomcat");
+			File base = new File( EnvConfig.getSafe("embedded_tomcat.baseFolder"));
 
 			Context rootCtx = tomcat.addContext("/app", base.getAbsolutePath());
 
 			CouchbaseSecureSessionManager couchbaseSecureSessionManager = new CouchbaseSecureSessionManager();
-			couchbaseSecureSessionManager
-					.setPrivateKeyFilePath("src/test/resources/crypto/privkey.pkcs8.pem");
-			couchbaseSecureSessionManager.setBucket("default");
-			couchbaseSecureSessionManager
-					.setHosts("http://localhost:8091/pools");
-			couchbaseSecureSessionManager
-					.setApplicationId("EmbeddedTesterApplication");
+
+			couchbaseSecureSessionManager.setConfigFilePath(EnvConfig.getSafe("tomcat_manager_conf.propertiesFilePath"));
 
 			rootCtx.setManager(couchbaseSecureSessionManager);
 
@@ -113,10 +78,13 @@ public class CouchbaseSessionStoreTest extends TestCase {
 
 	} // END tomcatSetup Method
 
+	
 	public void tearDown() {
 
-		this.couchbaseClient.shutdown();
 		this.couchbaseClient = null;
+		this.cryptoService = null;
+		
+		this.secureSessionsStoreBase = null;
 
 	} // END tearDown Method
 
@@ -125,82 +93,80 @@ public class CouchbaseSessionStoreTest extends TestCase {
 
 		this.tomcatSetup();
 
-		// /*
-		// * Fixtures
-		// */
-		// String sessionId = "1234abcd";
-		// String applicationId = "WonderApp";
-		// SessionKey sessionKey = new SessionKey(applicationId, sessionId);
-		// CryptoService cryptoService = new
-		// PKCS8CryptoService("src/test/resources/crypto/privkey.pkcs8.pem");
-		//
-		// SessionModel sessionModel = new SessionModel();
-		// sessionModel.setDataEncoding(SessionModel.BASE64);
-		// sessionModel.setPrivateKeyId("08_17_2014");
-		// Date createdDate = new Date();
-		// sessionModel.setCreateTime(createdDate);
-		// Date updatedDate = new Date();
-		// sessionModel.setUpdateTime(updatedDate);
-		// String data = "This is the data!";
-		// byte[] dataBytes = cryptoService.encrypt(data);
-		// byte[] dataBase64 = Base64.getEncoder().encode(dataBytes);
-		// sessionModel.setData(new String(dataBase64));
-		//
-		// Gson gson = new GsonBuilder().registerTypeAdapter(Date.class, new
-		// DateJsonSerializer()).create();
-		// String sessionModelJson = gson.toJson(sessionModel);
-		//
-		// // Put SessionJSON into the database
-		// this.couchbaseClient.set(sessionKey.toString(), sessionModelJson,
-		// PersistTo.ONE);
-		//
-		// // Ensure that it really is in the database
-		// String sessionModelJsonFromDB = (String)
-		// this.couchbaseClient.get(sessionKey.toString());
-		// assertNotNull(sessionModelJsonFromDB);
-		//
-		//
-		// CouchbaseSessionStore couchbaseSessionStore = new
-		// CouchbaseSessionStore();
-		// couchbaseSessionStore.setCouchbaseClient(this.couchbaseClient);
-		// couchbaseSessionStore.setCryptoService(cryptoService);
-		// couchbaseSessionStore.setApplicationId("WonderApp");
-		//
-		// Loader mockedLoader = mock(Loader.class);
-		// when(mockedLoader.getClassLoader()).thenReturn(couchbaseSessionStore.getClass().getClassLoader());
-		//
-		// Container mockedContainer = mock(Container.class);
-		// when(mockedContainer.getLoader()).thenReturn(mockedLoader);
-		//
-		// Manager mockedManager = mock(CouchbaseSecureSessionManager.class);
-		// when(mockedManager.getContainer()).thenReturn(mockedContainer);
-		//
-		// ServletContext servletContext = new MockServletContext();
-		// HttpSession httpSession = new MockHttpSession(servletContext);
-		//
-		// // Session mockedSession = mock(Session.class);
-		// StandardSession standardSession = new StandardSession(mockedManager);
-		// // Session session = new StandardSessionFacade(httpSession);
-		//
-		// when(mockedManager.createSession(sessionId)).thenReturn(standardSession);
-		//
-		// couchbaseSessionStore.setManager(mockedManager);
-		//
-		//
-		// /*
-		// * Method Under Test
-		// */
-		// Session resultSession = null;
-		// try {
-		//
-		// resultSession = couchbaseSessionStore.load(sessionId);
-		//
-		// } catch (IOException | ClassNotFoundException ioe) {
-		// ioe.printStackTrace();
-		// }
-		//
-		//
-		// assertNotNull(resultSession);
+		 /*
+		 * Fixtures
+		 */
+//		 String sessionId = "1234abcd";
+//		 String applicationId = "WonderApp";
+//		 SessionKey sessionKey = new SessionKey(applicationId, sessionId);
+//		 
+//		
+//		 SessionModel sessionModel = new SessionModel();
+//		 sessionModel.setDataEncoding(SessionModel.BASE64);
+//		 sessionModel.setPrivateKeyId("08_17_2014");
+//		 Date createdDate = new Date();
+//		 sessionModel.setCreateTime(createdDate);
+//		 Date updatedDate = new Date();
+//		 sessionModel.setUpdateTime(updatedDate);
+//		 String data = "This is the data!";
+//		 byte[] dataBytes = this.cryptoService.encrypt(data);
+//		 byte[] dataBase64 = Base64.getEncoder().encode(dataBytes);
+//		 sessionModel.setData(new String(dataBase64));
+//		
+//		 Gson gson = new GsonBuilder().registerTypeAdapter(Date.class, new
+//		 DateJsonSerializer()).create();
+//		 String sessionModelJson = gson.toJson(sessionModel);
+//		
+//		 // Put SessionJSON into the database
+//		 this.couchbaseClient.set(sessionKey.toString(), sessionModelJson, PersistTo.ONE);
+//		
+//		 // Ensure that it really is in the database
+//		 String sessionModelJsonFromDB = (String)
+//		 this.couchbaseClient.get(sessionKey.toString());
+//		 assertNotNull(sessionModelJsonFromDB);
+		
+		
+//		 CouchbaseSessionStore couchbaseSessionStore = new
+//		 CouchbaseSessionStore();
+//		 couchbaseSessionStore.setCouchbaseClient(this.couchbaseClient);
+//		 couchbaseSessionStore.setCryptoService(cryptoService);
+//		 couchbaseSessionStore.setApplicationId("WonderApp");
+//		
+//		 Loader mockedLoader = mock(Loader.class);
+//		 when(mockedLoader.getClassLoader()).thenReturn(couchbaseSessionStore.getClass().getClassLoader());
+//		
+//		 Container mockedContainer = mock(Container.class);
+//		 when(mockedContainer.getLoader()).thenReturn(mockedLoader);
+//		
+//		 Manager mockedManager = mock(CouchbaseSecureSessionManager.class);
+//		 when(mockedManager.getContainer()).thenReturn(mockedContainer);
+//		
+//		 ServletContext servletContext = new MockServletContext();
+//		 HttpSession httpSession = new MockHttpSession(servletContext);
+//		
+//		 // Session mockedSession = mock(Session.class);
+//		 StandardSession standardSession = new StandardSession(mockedManager);
+//		 // Session session = new StandardSessionFacade(httpSession);
+//		
+//		 when(mockedManager.createSession(sessionId)).thenReturn(standardSession);
+//		
+//		 couchbaseSessionStore.setManager(mockedManager);
+//		
+//		
+//		 /*
+//		 * Method Under Test
+//		 */
+//		 Session resultSession = null;
+//		 try {
+//		
+//		 resultSession = this.secureSessionsStoreBase.load(sessionId);
+//		
+//		 } catch (IOException | ClassNotFoundException ioe) {
+//		 ioe.printStackTrace();
+//		 }
+//		
+//		
+//		 assertNotNull(resultSession);
 
 	} // END testRemove Method
 

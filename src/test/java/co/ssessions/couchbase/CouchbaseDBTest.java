@@ -1,12 +1,7 @@
 package co.ssessions.couchbase;
 
-import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 import junit.framework.TestCase;
@@ -14,57 +9,56 @@ import net.spy.memcached.PersistTo;
 
 import org.junit.Test;
 
-import co.ssessions.SessionKey;
-import co.ssessions.SessionModel;
 import co.ssessions.conf.EnvConfig;
+import co.ssessions.conf.EnvironmentConfiguration;
+import co.ssessions.dao.SecureSessionsDAO;
 import co.ssessions.json.DateJsonDeserializer;
 import co.ssessions.json.DateJsonSerializer;
+import co.ssessions.models.SessionKey;
+import co.ssessions.models.SessionModel;
+import co.ssessions.modules.CouchbaseSecureSessionsModule;
 
 import com.couchbase.client.CouchbaseClient;
-import com.couchbase.client.CouchbaseConnectionFactory;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
 
 
 public class CouchbaseDBTest extends TestCase {
 
 
 	CouchbaseClient couchbaseClient = null;
+	Injector injector = null;
+	SecureSessionsDAO secureSessionsDAO = null;
 	
 	public void setUp() {
 		
-		List<URI> hosts = new ArrayList<URI>();
-        try {
-        	String[] hostStringArray = EnvConfig.getStringArray("couchbase.hosts");
-        	for (String hostString : hostStringArray) {
-        		hosts.add(new URI(hostString));
-        	}
-		} catch (URISyntaxException use) {
-			use.printStackTrace();
-		}
-        
-        // Name of the Bucket to connect to
-        String bucket = EnvConfig.getSafe("couchbase.bucket");
-        
-        // Password of the bucket (empty) string if none
-        String password = EnvConfig.getSafe("couchbase.password");
-        
-        // Connect to the Cluster
-		try {
-			CouchbaseConnectionFactory cf = new
-			CouchbaseConnectionFactory(hosts, bucket, password);
-			this.couchbaseClient = new CouchbaseClient(cf);
-			
-		} catch (IOException ioe) {
-			ioe.printStackTrace();
-		}
-	} // END setUp Metod
+		EnvironmentConfiguration.load("couchbase_manager_conf.properties");
+		
+		this.injector = Guice.createInjector(new CouchbaseSecureSessionsModule());
+		CouchbaseClientHolder cch = this.injector.getInstance(CouchbaseClientHolder.class);
+		
+		assertNotNull(cch);
+		
+		CouchbaseClient client = cch.getInstance();
+		
+		assertNotNull(client);
+		assertTrue(client instanceof CouchbaseClient);
+		
+		this.couchbaseClient = client;
+		
+		
+		this.secureSessionsDAO = this.injector.getInstance(SecureSessionsDAO.class);
+		
+	} // END setUp Method
 	
 	
 	
 	public void tearDown() {
-		this.couchbaseClient.shutdown();
 		this.couchbaseClient = null;
+		this.injector = null;
+		this.secureSessionsDAO = null;
 	}
 	
 	
@@ -87,10 +81,12 @@ public class CouchbaseDBTest extends TestCase {
 		String data = "This is the data!";
 		sessionModel.setData(data);
 		
+		
+		
 		/*
 		 * Method Under Test
 		 */
-		CouchbaseDB.storeSession(this.couchbaseClient, sessionKey, sessionModel);
+		this.secureSessionsDAO.storeSession(sessionKey, sessionModel);
 		
 		/*
 		 * Check results are in database
@@ -109,7 +105,7 @@ public class CouchbaseDBTest extends TestCase {
 		assertEquals("08_17_2014", resultSessionModel.getPrivateKeyId());
 		
 		// Remove data from database
-		this.couchbaseClient.delete(sessionKey.toString());
+		this.couchbaseClient.delete(sessionKey.toString(), PersistTo.ONE);
 	}
 	
 	
@@ -145,7 +141,7 @@ public class CouchbaseDBTest extends TestCase {
 		/*
 		 * Method Under Test
 		 */
-		CouchbaseDB.deleteSession(this.couchbaseClient, sessionKey);
+		this.secureSessionsDAO.deleteSession(sessionKey);
 		
 		/*
 		 * Ensure that the results are NOT in database
@@ -198,7 +194,7 @@ public class CouchbaseDBTest extends TestCase {
 		sessionKeys.add(sessionKey1);
 		sessionKeys.add(sessionKey2);
 		sessionKeys.add(sessionKey3);
-		CouchbaseDB.deleteSessions(this.couchbaseClient, sessionKeys);
+		this.secureSessionsDAO.deleteSessions(sessionKeys);
 		
 		/*
 		 * Ensure that the results are NOT in database
@@ -244,7 +240,7 @@ public class CouchbaseDBTest extends TestCase {
 		/*
 		 * Method Under Test
 		 */
-		SessionModel resultSessionModel = CouchbaseDB.retrieveSession(this.couchbaseClient, sessionKey);
+		SessionModel resultSessionModel = this.secureSessionsDAO.retrieveSession(sessionKey);
 		
 		
 		assertEquals(updatedDate, resultSessionModel.getUpdateTime());
@@ -254,7 +250,7 @@ public class CouchbaseDBTest extends TestCase {
 		assertEquals("08_17_2014", resultSessionModel.getPrivateKeyId());
 		
 		// Remove data from database
-		this.couchbaseClient.delete(sessionKey.toString());
+		this.couchbaseClient.delete(sessionKey.toString(), PersistTo.ONE);
 		
 	}
 	
@@ -302,14 +298,14 @@ public class CouchbaseDBTest extends TestCase {
 		/*
 		 * Method Under Test
 		 */
-		long count = CouchbaseDB.numberOfSessions(this.couchbaseClient, sessionKey1);
+		long count = this.secureSessionsDAO.numberOfSessions(sessionKey1);
 		
 		assertEquals(3, count);
 		
-		this.couchbaseClient.delete(sessionKey1.toString());
-		this.couchbaseClient.delete(sessionKey2.toString());
-		this.couchbaseClient.delete(sessionKey3.toString());
-		this.couchbaseClient.delete(sessionKey4.toString());
+		this.couchbaseClient.delete(sessionKey1.toString(), PersistTo.ONE);
+		this.couchbaseClient.delete(sessionKey2.toString(), PersistTo.ONE);
+		this.couchbaseClient.delete(sessionKey3.toString(), PersistTo.ONE);
+		this.couchbaseClient.delete(sessionKey4.toString(), PersistTo.ONE);
 		
 	} // END testNumberOfSession Method
 	
@@ -357,14 +353,14 @@ public class CouchbaseDBTest extends TestCase {
 		/*
 		 * Method Under Test
 		 */
-		long count = CouchbaseDB.numberOfSessions(this.couchbaseClient, sessionKey3);
+		long count = this.secureSessionsDAO.numberOfSessions(sessionKey3);
 		
 		assertEquals(1, count);
 		
-		this.couchbaseClient.delete(sessionKey1.toString());
-		this.couchbaseClient.delete(sessionKey2.toString());
-		this.couchbaseClient.delete(sessionKey3.toString());
-		this.couchbaseClient.delete(sessionKey4.toString());
+		this.couchbaseClient.delete(sessionKey1.toString(), PersistTo.ONE);
+		this.couchbaseClient.delete(sessionKey2.toString(), PersistTo.ONE);
+		this.couchbaseClient.delete(sessionKey3.toString(), PersistTo.ONE);
+		this.couchbaseClient.delete(sessionKey4.toString(), PersistTo.ONE);
 		
 	} // END testNumberOfSession_2 Method
 

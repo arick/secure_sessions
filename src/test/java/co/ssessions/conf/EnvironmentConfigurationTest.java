@@ -3,8 +3,11 @@ package co.ssessions.conf;
 import java.util.Properties;
 
 import org.apache.commons.configuration.Configuration;
+import org.hamcrest.core.IsNot;
 import org.junit.Test;
 
+import static org.hamcrest.CoreMatchers.*;
+import static org.hamcrest.MatcherAssert.assertThat;
 import junit.framework.TestCase;
 
 public class EnvironmentConfigurationTest extends TestCase {
@@ -18,10 +21,12 @@ public class EnvironmentConfigurationTest extends TestCase {
 		 * Method under test
 		 */
 		Configuration config = EnvironmentConfiguration.get();
-		String result = config.getString("couchbase.hosts");
+		assertNotNull(config);
+		
+		String result = config.getString("embedded_tomcat.baseFolder");
 		
 		assertNotNull(result);
-		assertEquals("http://localhost:8091/pools", result);
+		assertThat("src/test/resources/embedded_tomcat", equalTo(result));
 		
 	}
 	
@@ -34,10 +39,26 @@ public class EnvironmentConfigurationTest extends TestCase {
 		/*
 		 * Method under test
 		 */
-		String result = EnvironmentConfiguration.get("couchbase.hosts");
+		String result = EnvironmentConfiguration.get("embedded_tomcat.baseFolder");
 		
 		assertNotNull(result);
-		assertEquals("http://localhost:8091/pools", result);
+		assertThat("src/test/resources/embedded_tomcat", equalTo(result));
+		
+	}
+	
+	@Test
+	public void testLoad() {
+		
+		System.setProperty("build.env", "local_test");
+		/*
+		 * Method under test
+		 */
+		EnvironmentConfiguration.load("couchbase_manager_conf.properties");
+		
+		String result = EnvironmentConfiguration.get("ss.applicationId");
+		
+		assertNotNull(result);
+		assertThat("EmbeddedTomcatApplication", equalTo(result));
 		
 	}
 	

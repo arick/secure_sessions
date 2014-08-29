@@ -10,4 +10,6 @@ public class SecureSessionsConstants {
 	public static final String BUILD_ENVIRONMENT_PROPERTY_NAME = "build.env";
 	public static final String BUILD_ENVIRONMENT_PROPERTY_FILENAME_SUFFIX = "_env.properties";
 	
+	public static final String DEFAULT_MANAGER_TYPE = "couchbase";
+	
 }

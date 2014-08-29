@@ -1,25 +1,20 @@
 package co.ssessions.couchbase;
 
-import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.List;
-
 import org.apache.catalina.LifecycleException;
+import org.apache.commons.lang3.StringUtils;
 
-import co.ssessions.SecureSessionManagager;
+import co.ssessions.managers.SecureSessionManagager;
+import co.ssessions.modules.CouchbaseSecureSessionsModule;
 
 import com.couchbase.client.CouchbaseClient;
-import com.couchbase.client.CouchbaseConnectionFactory;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
 
 public class CouchbaseSecureSessionManager extends SecureSessionManagager {
 
 	protected static final String name = "CouchbaseSecureSessionManager";
     protected static final String info = name + "/1.0";
 	
-	protected final CouchbaseSessionStore couchBaseSessionStore;
-	protected CouchbaseClient couchbaseClient;
 	
     /*
      * Values injected from the context.xml file
@@ -30,48 +25,26 @@ public class CouchbaseSecureSessionManager extends SecureSessionManagager {
 	
 	
 	public CouchbaseSecureSessionManager() {
-		
 		super();
-		
-		this.couchBaseSessionStore = new CouchbaseSessionStore();
-		this.setStore(this.couchBaseSessionStore);
-	
 	}
 
 
 	@Override
 	protected void initInternal() throws LifecycleException {
+
+		// Establish and configure the CouchbaseClientHolder's static CouchbaseClient
+		Injector injector = Guice.createInjector(new CouchbaseSecureSessionsModule());
+		CouchbaseClientHolder couchbaseClientHolder = injector.getInstance(CouchbaseClientHolder.class);
+
+		couchbaseClientHolder.setHosts(this.getSafe(this.hosts));
+		couchbaseClientHolder.setBucket(this.getSafe(this.bucket));
+		couchbaseClientHolder.setPassword(this.getSafe(this.password));
+		
+		// Just needed to initialize the static CouchbaseClient
+		@SuppressWarnings("unused")
+		CouchbaseClient client = couchbaseClientHolder.getInstance();
+		
 		super.initInternal();
-		
-		// Set up the Couchbase Client
-		List<URI> hostsURIList = new ArrayList<URI>();
-		String[] hostsURIArray = this.hosts.split(",");
-		for (String hostUriString : hostsURIArray) {
-			
-			URI uri = null;
-			
-			try {
-				uri = new URI(hostUriString);
-			} catch (URISyntaxException use) {
-				use.printStackTrace();
-			}
-			
-			hostsURIList.add(uri);
-		}
-		
-		
-		try {
-			CouchbaseConnectionFactory cf = new CouchbaseConnectionFactory(hostsURIList, this.bucket, this.password);
-			this.couchbaseClient = new CouchbaseClient(cf);
-			
-		} catch (IOException ioe) {
-			ioe.printStackTrace();
-		}
-		
-		this.couchBaseSessionStore.setCouchbaseClient(this.couchbaseClient);
-		this.couchBaseSessionStore.setCryptoService(this.cryptoService);
-		this.couchBaseSessionStore.setApplicationId(this.applicationId);
-		
 		
 	} // END initInternal Method
 
@@ -95,6 +68,17 @@ public class CouchbaseSecureSessionManager extends SecureSessionManagager {
 
 	public void setPassword(String password) {
 		this.password = password;
+	}
+	
+	private String getSafe(String value, String defaultValue) {
+		if (StringUtils.isBlank(value)) {
+			return defaultValue;
+		}
+		return value;
+	}
+	
+	private String getSafe(String value) {
+		return this.getSafe(value, "");
 	}
 	
 }

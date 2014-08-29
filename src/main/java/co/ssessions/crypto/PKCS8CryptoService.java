@@ -20,25 +20,39 @@ import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
+import javax.validation.constraints.NotNull;
+import javax.validation.executable.ValidateOnExecution;
+
+import org.hibernate.validator.constraints.NotBlank;
+
+import co.ssessions.util.DoValidation;
+
+import com.google.inject.Inject;
+
+
 
 public class PKCS8CryptoService implements CryptoService {
 
-	
-	private String privateKeyFile;
+	private CryptoServiceConfiguration cryptoServiceConfiguration;
+	private String privateKeyFilePath;
 	private PrivateKey privateKey;
 	private PublicKey publicKey;
 	
-
-	public PKCS8CryptoService(String privateKeyFile) {
-		
-		this.privateKeyFile = privateKeyFile;
-		
-		this.privateKey = this.getPrivateKeyFromFile(this.privateKeyFile);
+	@Inject
+	public PKCS8CryptoService(CryptoServiceConfiguration cryptoServiceConfiguration) {
+		this.cryptoServiceConfiguration = cryptoServiceConfiguration;
+		this.privateKeyFilePath = this.cryptoServiceConfiguration.get("crypto.privateKeyFilePath");
+		this.init();
+	}
+	
+	
+	public void init() {
+		this.privateKey = this.getPrivateKeyFromFile(this.privateKeyFilePath);
 		this.publicKey = this.extractPublicKeyFromPrivateKey(this.privateKey);
 	}
 	
 	
-	private PrivateKey getPrivateKeyFromFile(String filePath) {
+	private PrivateKey getPrivateKeyFromFile(@NotNull String filePath) {
 		
 		PrivateKey privateKey = null;
 		
@@ -157,8 +171,9 @@ public class PKCS8CryptoService implements CryptoService {
 	/* (non-Javadoc)
 	 * @see co.ssessions.crypto.CryptoService#encrypt(java.lang.String)
 	 */
+	@ValidateOnExecution
 	@Override
-	public byte[] encrypt (String content) {
+	public byte[] encrypt (@NotBlank String content) {
 		
 		byte[] encryptedContentBytes = this.encrypt(content.getBytes());
 		return encryptedContentBytes;
@@ -169,6 +184,7 @@ public class PKCS8CryptoService implements CryptoService {
 	/* (non-Javadoc)
 	 * @see co.ssessions.crypto.CryptoService#decrypt(byte[])
 	 */
+	@ValidateOnExecution
 	@Override
 	public byte[] decrypt (byte[] encryptedContentBytes) {
 		
@@ -180,14 +196,33 @@ public class PKCS8CryptoService implements CryptoService {
 	/* (non-Javadoc)
 	 * @see co.ssessions.crypto.CryptoService#encrypt(byte[])
 	 */
+	@ValidateOnExecution
 	@Override
-	public byte[] encrypt(byte[] contentBytes) {
+	public byte[] encrypt(@NotNull byte[] contentBytes) {
 		
 		byte[] encryptedContentBytes = this.encryptWithPublicKey(this.publicKey, contentBytes);
 		return encryptedContentBytes;
 	}
 	
-	
-	
-	
+//	
+//	private void validateParameters(String methodName, Class<?>[] parameterTypes, Object[] parameters) {
+//
+//		Method method = null;
+//		try {
+//			method = this.getClass().getMethod(methodName, parameterTypes);
+//		} catch (NoSuchMethodException e) {
+//			e.printStackTrace();
+//		} catch (SecurityException e) {
+//			e.printStackTrace();
+//		}
+//		
+//		ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
+//		ExecutableValidator executableValidator = factory.getValidator().forExecutables();
+//		Set violations = executableValidator.validateParameters(this, method, parameters);
+//
+//		if ((violations != null) && (violations.size() > 0)) {
+//			throw new IllegalArgumentException(violations.toString());
+//		}
+//	}
+
 }

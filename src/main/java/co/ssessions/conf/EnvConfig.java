@@ -1,6 +1,6 @@
 package co.ssessions.conf;
 
-import org.apache.commons.configuration.Configuration;
+import org.apache.commons.configuration.PropertiesConfiguration;
 import org.apache.commons.lang3.StringUtils;
 
 /**
@@ -11,7 +11,8 @@ import org.apache.commons.lang3.StringUtils;
  */
 public class EnvConfig {
 
-	public static Configuration get() {
+	public static PropertiesConfiguration get() {
+		
 		return EnvironmentConfiguration.get();
 	}
 	

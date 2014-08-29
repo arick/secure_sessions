@@ -22,37 +22,44 @@ import org.apache.catalina.session.StoreBase;
 import org.apache.catalina.util.CustomObjectInputStream;
 import org.apache.commons.lang3.StringUtils;
 
-import co.ssessions.SessionKey;
-import co.ssessions.SessionModel;
 import co.ssessions.crypto.CryptoService;
+import co.ssessions.dao.SecureSessionsDAO;
+import co.ssessions.models.SessionKey;
+import co.ssessions.models.SessionModel;
+import co.ssessions.store.SecureSessionsStoreBase;
 import co.ssessions.util.SecureSessionsConstants;
 
 import com.couchbase.client.CouchbaseClient;
+import com.google.inject.Inject;
 
-public class CouchbaseSessionStore extends StoreBase {
+public class CouchbaseSessionStore extends SecureSessionsStoreBase {
 	
 	private static final String name = "CouchbaseSessionStore";
 	private static final String info = name + "/1.0";
 	
 	private Set<String> keys = Collections.synchronizedSet(new HashSet<String>());
 	
-	protected CouchbaseClient couchbaseClient;
-	protected String applicationId;
+	
 	protected Map<String, String> privateKeyMap;
 	
 	protected CryptoService cryptoService;
+	private SecureSessionsDAO secureSessionsDao;
 	
 	
-	public CouchbaseSessionStore() {
+	@Inject
+	public CouchbaseSessionStore(SecureSessionsDAO secureSessionsDao, CryptoService cryptoService) {
+		this.cryptoService = cryptoService;
+		this.secureSessionsDao = secureSessionsDao;
 	}
 
+	
 	@Override
 	public int getSize() throws IOException {
 		
 		SessionKey sessionKey = new SessionKey();
 		sessionKey.setApplicationId(this.applicationId);
 		
-		int size = CouchbaseDB.numberOfSessions(this.couchbaseClient, sessionKey);
+		int size = this.secureSessionsDao.numberOfSessions(sessionKey);
 		return size;
 	}
 
@@ -67,7 +74,7 @@ public class CouchbaseSessionStore extends StoreBase {
 	public Session load(String id) throws ClassNotFoundException, IOException {
 		
 		SessionKey sessionKey = new SessionKey(this.applicationId, id);
-		SessionModel sessionModel = CouchbaseDB.retrieveSession(this.couchbaseClient, sessionKey);
+		SessionModel sessionModel = this.secureSessionsDao.retrieveSession(sessionKey);
 		
 		StandardSession session = (StandardSession) this.getManager().createSession(id);
 		
@@ -122,7 +129,7 @@ public class CouchbaseSessionStore extends StoreBase {
 	public void remove(String id) throws IOException {
 		
 		SessionKey sessionKey = new SessionKey(this.applicationId, id);
-		CouchbaseDB.deleteSession(this.couchbaseClient, sessionKey);
+		this.secureSessionsDao.deleteSession(sessionKey);
 		this.keys.remove(sessionKey.getSessionId());
 	}
 
@@ -135,7 +142,7 @@ public class CouchbaseSessionStore extends StoreBase {
 			sessionKeys.add(new SessionKey(this.applicationId, key));
 		}
 
-		CouchbaseDB.deleteSessions(this.couchbaseClient, sessionKeys);
+		this.secureSessionsDao.deleteSessions(sessionKeys);
 		this.keys.clear();
 	}
 
@@ -186,14 +193,9 @@ public class CouchbaseSessionStore extends StoreBase {
 		sessionModel.setData(encryptedSessionDataBytesBase64);
 		
 		
-		CouchbaseDB.storeSession(this.couchbaseClient, sessionKey, sessionModel);
+		this.secureSessionsDao.storeSession(sessionKey, sessionModel);
 		
 		this.keys.add(sessionKey.getSessionId());
-	}
-	
-	
-	public void setCouchbaseClient(CouchbaseClient couchbaseClient) {
-		this.couchbaseClient = couchbaseClient;
 	}
 	
 	
@@ -208,15 +210,6 @@ public class CouchbaseSessionStore extends StoreBase {
 		return info;
 	}
 
-	
-	public String getApplicationId() {
-		return applicationId;
-	}
-
-	
-	public void setApplicationId(String applicationId) {
-		this.applicationId = applicationId;
-	}
 
 	
 	public Map getPrivateKeyMap() {

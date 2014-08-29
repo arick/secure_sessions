@@ -1,8 +1,5 @@
 package co.ssessions.conf;
 
-import java.util.List;
-import java.util.Properties;
-
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.PropertiesConfiguration;
@@ -12,10 +9,10 @@ import co.ssessions.util.SecureSessionsConstants;
 
 public class EnvironmentConfiguration {
 
-	private static volatile Configuration config;
+	private static volatile PropertiesConfiguration config;
 
-	public static Configuration get() {
-		Configuration result = config;
+	public static PropertiesConfiguration get() {
+		PropertiesConfiguration result = config;
 		if (result == null) {
 			synchronized (EnvironmentConfiguration.class) {
 				result = config;
@@ -28,7 +25,7 @@ public class EnvironmentConfiguration {
 	}
 	
 	
-	public static Configuration init() {
+	public static PropertiesConfiguration init() {
 
 		PropertiesConfiguration config = new PropertiesConfiguration();
 		
@@ -54,10 +51,19 @@ public class EnvironmentConfiguration {
 	
 	
 	public static String get(String property) {
-		Configuration config = EnvironmentConfiguration.get();
+		PropertiesConfiguration config = EnvironmentConfiguration.get();
 		String value = config.getString(property);
 		return value;
 	}
 	
+	
+	public static void load(String propertiesFilePath) {
+		PropertiesConfiguration config = EnvironmentConfiguration.get();
+		try {
+			config.load(propertiesFilePath);
+		} catch (ConfigurationException e) {
+			e.printStackTrace();
+		}
+	}
 	
 } // END EnvironmentConfiguration Class
