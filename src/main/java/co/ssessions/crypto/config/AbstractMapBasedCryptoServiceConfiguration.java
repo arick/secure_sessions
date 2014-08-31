@@ -4,6 +4,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
+import javax.validation.executable.ValidateOnExecution;
+
 /**
  * 
  * This class is designed to be extended by overriding the constructor and providing the object's basic configuration state upon the instantiation of the class.
@@ -20,6 +22,7 @@ public abstract class AbstractMapBasedCryptoServiceConfiguration<K, V> implement
 		this.params = new HashMap<K, V>();
 	}
 	
+	@ValidateOnExecution
 	@Override
 	public V get(K parameter) {
 		return this.params.get(parameter);

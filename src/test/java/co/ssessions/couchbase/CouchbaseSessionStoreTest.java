@@ -7,7 +7,6 @@ import junit.framework.TestCase;
 import org.apache.catalina.Context;
 import org.apache.catalina.LifecycleException;
 import org.apache.catalina.startup.Tomcat;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import co.ssessions.conf.EnvConfig;

@@ -2,6 +2,8 @@ package co.ssessions.crypto.config;
 
 import java.util.Set;
 
+import javax.validation.constraints.NotNull;
+
 /**
  * Implementation interface for all CryptoService configuration strategies.
  * 
@@ -15,7 +17,7 @@ public interface CryptoServiceConfiguration<K, V> {
 	 * @param parameter
 	 * @return
 	 */
-	public abstract V get(K parameter);
+	public abstract V get(@NotNull K parameter);
 	
 	
 	/**
