@@ -1,8 +1,1 @@
 /co/
-/common_env.properties
-/default_env.properties
-/env_conf/
-/local_test_env.properties
-/local_webservice_remote_db_env.properties
-/couchbase_manager_conf.properties
-/manager_conf/

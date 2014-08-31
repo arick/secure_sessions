@@ -7,12 +7,11 @@ import junit.framework.TestCase;
 import org.apache.catalina.Context;
 import org.apache.catalina.LifecycleException;
 import org.apache.catalina.startup.Tomcat;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import co.ssessions.conf.EnvConfig;
-import co.ssessions.conf.EnvironmentConfiguration;
 import co.ssessions.crypto.CryptoService;
-import co.ssessions.modules.CouchbaseSecureSessionsModule;
 import co.ssessions.store.SecureSessionsStoreBase;
 import co.ssessions.testSupport.embeddedTomcat.DatePrintServlet;
 
@@ -29,7 +28,8 @@ public class CouchbaseSessionStoreTest extends TestCase {
 
 	public void setUp() {
 		
-		EnvironmentConfiguration.load("couchbase_manager_conf.properties");
+		String managerConfigFilePath = EnvConfig.getSafe("tomcat_manager_conf.propertiesFilePath");
+		EnvConfig.load(managerConfigFilePath);
 		
 		this.injector = Guice.createInjector(new CouchbaseSecureSessionsModule());
 		CouchbaseClientHolder cch = this.injector.getInstance(CouchbaseClientHolder.class);
@@ -42,7 +42,6 @@ public class CouchbaseSessionStoreTest extends TestCase {
 		assertTrue(client instanceof CouchbaseClient);
 		
 		this.couchbaseClient = client;
-//		this.cryptoService = this.injector.getInstance(CryptoService.class);
 		
 		this.secureSessionsStoreBase = this.injector.getInstance(SecureSessionsStoreBase.class);
 		
@@ -55,7 +54,7 @@ public class CouchbaseSessionStoreTest extends TestCase {
 			Tomcat tomcat = new Tomcat();
 			tomcat.setPort(8080);
 
-			File base = new File( EnvConfig.getSafe("embedded_tomcat.baseFolder"));
+			File base = new File(EnvConfig.getSafe("embedded_tomcat.baseFolder"));
 
 			Context rootCtx = tomcat.addContext("/app", base.getAbsolutePath());
 
@@ -85,13 +84,16 @@ public class CouchbaseSessionStoreTest extends TestCase {
 		this.cryptoService = null;
 		
 		this.secureSessionsStoreBase = null;
+		EnvConfig.clearSingleton();
 
 	} // END tearDown Method
+
+	
 
 	@Test
 	public void testLoad() {
 
-		this.tomcatSetup();
+//		this.tomcatSetup();
 
 		 /*
 		 * Fixtures
@@ -126,8 +128,8 @@ public class CouchbaseSessionStoreTest extends TestCase {
 //		 assertNotNull(sessionModelJsonFromDB);
 		
 		
-//		 CouchbaseSessionStore couchbaseSessionStore = new
-//		 CouchbaseSessionStore();
+//		 DefaultSecureSessionsStoreBase couchbaseSessionStore = new
+//		 DefaultSecureSessionsStoreBase();
 //		 couchbaseSessionStore.setCouchbaseClient(this.couchbaseClient);
 //		 couchbaseSessionStore.setCryptoService(cryptoService);
 //		 couchbaseSessionStore.setApplicationId("WonderApp");
@@ -194,8 +196,8 @@ public class CouchbaseSessionStoreTest extends TestCase {
 	// when(mockedSession.getSession()).thenReturn(mockedHttpSession);
 	//
 	//
-	// CouchbaseSessionStore couchbaseSessionStore = new
-	// CouchbaseSessionStore();
+	// DefaultSecureSessionsStoreBase couchbaseSessionStore = new
+	// DefaultSecureSessionsStoreBase();
 	// couchbaseSessionStore.setCouchbaseClient(this.couchbaseClient);
 	// CryptoService cryptoService = new
 	// PKCS8CryptoService("src/test/resources/crypto/privkey.pkcs8.pem");
@@ -283,8 +285,8 @@ public class CouchbaseSessionStoreTest extends TestCase {
 	// assertNotNull(sessionModelJsonFromDB);
 	//
 	//
-	// CouchbaseSessionStore couchbaseSessionStore = new
-	// CouchbaseSessionStore();
+	// DefaultSecureSessionsStoreBase couchbaseSessionStore = new
+	// DefaultSecureSessionsStoreBase();
 	// couchbaseSessionStore.setCouchbaseClient(this.couchbaseClient);
 	// couchbaseSessionStore.setCryptoService(cryptoService);
 	// couchbaseSessionStore.setApplicationId("WonderApp");
@@ -348,8 +350,8 @@ public class CouchbaseSessionStoreTest extends TestCase {
 	// assertNotNull(sessionModelJsonFromDB);
 	//
 	//
-	// CouchbaseSessionStore couchbaseSessionStore = new
-	// CouchbaseSessionStore();
+	// DefaultSecureSessionsStoreBase couchbaseSessionStore = new
+	// DefaultSecureSessionsStoreBase();
 	// couchbaseSessionStore.setCouchbaseClient(this.couchbaseClient);
 	// couchbaseSessionStore.setCryptoService(cryptoService);
 	// couchbaseSessionStore.setApplicationId("WonderApp");

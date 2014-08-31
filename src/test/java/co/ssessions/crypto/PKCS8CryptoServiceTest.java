@@ -11,8 +11,9 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import co.ssessions.conf.EnvironmentConfiguration;
-import co.ssessions.modules.CouchbaseSecureSessionsModule;
+import co.ssessions.conf.EnvConfig;
+import co.ssessions.couchbase.CouchbaseSecureSessionsModule;
+import co.ssessions.crypto.impl.PKCS8CryptoService;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -27,7 +28,8 @@ public class PKCS8CryptoServiceTest extends TestCase {
 	@Before
 	protected void setUp() throws Exception {
 
-		EnvironmentConfiguration.load("couchbase_manager_conf.properties");
+		String managerConfigFilePath = EnvConfig.getSafe("tomcat_manager_conf.propertiesFilePath");
+		EnvConfig.load(managerConfigFilePath);
 		
 		this.injector = Guice.createInjector(new CouchbaseSecureSessionsModule());
 		this.cryptoService = this.injector.getInstance(CryptoService.class);
@@ -39,6 +41,7 @@ public class PKCS8CryptoServiceTest extends TestCase {
 	protected void tearDown() throws Exception {
 		this.injector = null;
 		this.cryptoService = null;
+		EnvConfig.clearSingleton();
 	}
 
 	@Test

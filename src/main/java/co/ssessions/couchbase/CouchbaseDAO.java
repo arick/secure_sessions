@@ -3,6 +3,8 @@ package co.ssessions.couchbase;
 import java.util.Date;
 import java.util.Set;
 
+import javax.validation.executable.ValidateOnExecution;
+
 import net.spy.memcached.PersistTo;
 import co.ssessions.dao.SecureSessionsDAO;
 import co.ssessions.json.DateJsonDeserializer;
@@ -26,14 +28,14 @@ public class CouchbaseDAO implements SecureSessionsDAO {
 	
 	private CouchbaseClient couchbaseClient;
 	
+	
 	@Inject
 	public CouchbaseDAO(CouchbaseClientHolder couchbaseClienthHolder) {
 		this.couchbaseClient = couchbaseClienthHolder.getInstance();
 	}
 	
-	/* (non-Javadoc)
-	 * @see co.ssessions.couchbase.SecureSessionsDAO#storeSession(com.couchbase.client.CouchbaseClient, co.ssessions.models.SessionKey, co.ssessions.models.SessionModel)
-	 */
+	
+	@ValidateOnExecution
 	@Override
 	public void storeSession(SessionKey sessionKey, SessionModel sessionModel) {
 
@@ -44,9 +46,7 @@ public class CouchbaseDAO implements SecureSessionsDAO {
 	}
 
 
-	/* (non-Javadoc)
-	 * @see co.ssessions.couchbase.SecureSessionsDAO#deleteSession(com.couchbase.client.CouchbaseClient, co.ssessions.models.SessionKey)
-	 */
+	@ValidateOnExecution
 	@Override
 	public void deleteSession(SessionKey sessionKey) {
 
@@ -54,9 +54,7 @@ public class CouchbaseDAO implements SecureSessionsDAO {
 	}
 
 
-	/* (non-Javadoc)
-	 * @see co.ssessions.couchbase.SecureSessionsDAO#deleteSessions(com.couchbase.client.CouchbaseClient, java.util.Set)
-	 */
+	@ValidateOnExecution
 	@Override
 	public void deleteSessions(Set<SessionKey> sessionKeys) {
 
@@ -65,10 +63,8 @@ public class CouchbaseDAO implements SecureSessionsDAO {
 		}
 	}
 
-
-	/* (non-Javadoc)
-	 * @see co.ssessions.couchbase.SecureSessionsDAO#numberOfSessions(com.couchbase.client.CouchbaseClient, co.ssessions.models.SessionKey)
-	 */
+	
+	@ValidateOnExecution
 	@Override
 	public int numberOfSessions(SessionKey sessionKey) {
 		
@@ -83,12 +79,10 @@ public class CouchbaseDAO implements SecureSessionsDAO {
 		ViewResponse response = this.couchbaseClient.query(view, query);
 		int numberOfSessions = response.size();
 		return numberOfSessions;
-	}	
+	}
 	
 	
-	/* (non-Javadoc)
-	 * @see co.ssessions.couchbase.SecureSessionsDAO#retrieveSession(com.couchbase.client.CouchbaseClient, co.ssessions.models.SessionKey)
-	 */
+	@ValidateOnExecution
 	@Override
 	public SessionModel retrieveSession(SessionKey sessionKey) {
 
@@ -98,8 +92,6 @@ public class CouchbaseDAO implements SecureSessionsDAO {
 		SessionModel sessionModel = (SessionModel) gson.fromJson(sessionModelJson, SessionModel.class); 
 		
 		return sessionModel;
-		
 	}
-	
 
 } // END CouchbaseDAO Class

@@ -10,47 +10,50 @@ import co.ssessions.conf.EnvConfig;
 
 import com.couchbase.client.CouchbaseClient;
 import com.couchbase.client.CouchbaseConnectionFactory;
-import com.google.inject.Inject;
 
 public class CouchbaseClientHolder {
 
-	private static volatile CouchbaseClient couchbaseClient;
-	
 	private String hosts;
 	private String bucket;
 	private String password;
 	
+	private static volatile CouchbaseClient singleton = null;
 	
-	@Inject
+
 	public CouchbaseClientHolder() {
 		
 		this.hosts = EnvConfig.getSafe("couchbase.hosts");
 		this.bucket = EnvConfig.getSafe("couchbase.bucket");
 		this.password = EnvConfig.getSafe("couchbase.password");
 		
-		couchbaseClient = this.getInstance();
 	}
 	
 	
-
 	public CouchbaseClient getInstance() {
-		CouchbaseClient result = couchbaseClient;
-		if (result == null) {
+		CouchbaseClient proxy = singleton;
+		if (proxy == null) {
 			synchronized (this) {
-				result = couchbaseClient;
-				if (result == null) {
-					couchbaseClient = result = this.init();
+				proxy = singleton;
+				if (proxy == null) {
+					singleton = proxy = this.init();
 				}
 			}
 		}
-		return result;
+		return proxy;
 	}
 	
 	
+	public void nullifySingleton() {
+		singleton = null;
+	}
+	
+	public static void clearSingleton() {
+		new EnvConfig().nullifySingleton();
+	}
+
 	private CouchbaseClient init() {
 		
 		// TODO: Defensive programming here - ensure all of parameters have been passed in.
-		
 		
 		
 		// Set up the Couchbase Client
@@ -82,28 +85,5 @@ public class CouchbaseClientHolder {
 		
 	}
 
-	public String getHosts() {
-		return hosts;
-	}
-
-	public void setHosts(String hosts) {
-		this.hosts = hosts;
-	}
-
-	public String getBucket() {
-		return bucket;
-	}
-
-	public void setBucket(String bucket) {
-		this.bucket = bucket;
-	}
-
-	public String getPassword() {
-		return password;
-	}
-
-	public void setPassword(String password) {
-		this.password = password;
-	}
 
 }
