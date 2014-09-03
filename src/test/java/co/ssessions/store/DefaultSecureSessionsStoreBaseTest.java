@@ -7,7 +7,6 @@ import junit.framework.TestCase;
 import org.apache.catalina.Context;
 import org.apache.catalina.LifecycleException;
 import org.apache.catalina.Pipeline;
-import org.apache.catalina.core.StandardPipeline;
 import org.apache.catalina.startup.Tomcat;
 import org.junit.Test;
 
@@ -16,7 +15,6 @@ import co.ssessions.couchbase.CouchbaseClientHolder;
 import co.ssessions.couchbase.CouchbaseSecureSessionsManager;
 import co.ssessions.couchbase.CouchbaseSecureSessionsModule;
 import co.ssessions.crypto.CryptoService;
-import co.ssessions.store.SecureSessionsStoreBase;
 import co.ssessions.testSupport.embeddedTomcat.DatePrintServlet;
 import co.ssessions.valve.SecureSessionsValve;
 import co.ssessions.valve.Test2Valve;

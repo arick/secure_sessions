@@ -18,9 +18,7 @@ import javax.servlet.http.HttpSession;
 import org.apache.catalina.Container;
 import org.apache.catalina.Session;
 import org.apache.catalina.session.StandardSession;
-import org.apache.catalina.session.StoreBase;
 import org.apache.catalina.util.CustomObjectInputStream;
-import org.apache.commons.lang3.StringUtils;
 
 import co.ssessions.crypto.CryptoService;
 import co.ssessions.dao.SecureSessionsDAO;
@@ -28,7 +26,6 @@ import co.ssessions.models.SessionKey;
 import co.ssessions.models.SessionModel;
 import co.ssessions.util.SecureSessionsConstants;
 
-import com.couchbase.client.CouchbaseClient;
 import com.google.inject.Inject;
 
 public class DefaultSecureSessionsStoreBase extends SecureSessionsStoreBase {
