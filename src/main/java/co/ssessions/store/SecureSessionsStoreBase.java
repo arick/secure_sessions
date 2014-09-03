@@ -1,10 +1,17 @@
 package co.ssessions.store;
 
+import java.io.IOException;
+
+import javax.servlet.http.HttpSession;
+
 import org.apache.catalina.session.StoreBase;
 
 public abstract class SecureSessionsStoreBase extends StoreBase {
 
 	protected String applicationId;
+	
+	
+	public abstract void save(HttpSession httpSession) throws IOException;
 	
 	
 	public String getApplicationId() {

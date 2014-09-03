@@ -2,11 +2,11 @@ package co.ssessions.couchbase;
 
 import org.apache.catalina.LifecycleException;
 
-import co.ssessions.managers.SecureSessionManagager;
+import co.ssessions.managers.SecureSessionsManagager;
 
-public class CouchbaseSecureSessionManager extends SecureSessionManagager {
+public class CouchbaseSecureSessionsManager extends SecureSessionsManagager {
 
-	protected static final String name = "CouchbaseSecureSessionManager";
+	protected static final String name = "CouchbaseSecureSessionsManager";
     protected static final String info = name + "/1.0";
 	
 	
@@ -18,7 +18,7 @@ public class CouchbaseSecureSessionManager extends SecureSessionManagager {
 	protected String password = "";
 	
 	
-	public CouchbaseSecureSessionManager() {
+	public CouchbaseSecureSessionsManager() {
 		super();
 	}
 

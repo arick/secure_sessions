@@ -71,7 +71,62 @@ public class PKCS8CryptoServiceTest extends TestCase {
 	} // END testEncrpytDecrypt_1 Method
 	
 	
-	public void testEncrypt_Null_Parameter() {
+	
+	@Test
+	public void testEncrpytDecrypt_EmptyString() {
+		
+		try {
+			
+			String content = "";
+			
+			/*
+			 * Method under test
+			 */
+			byte[] encryptedContentBytes = this.cryptoService.encrypt(content);
+			
+			/*
+			 * Method under test
+			 */
+			byte[] decryptedContentBytes = this.cryptoService.decrypt(encryptedContentBytes);
+			
+			String decryptedContent = new String(decryptedContentBytes, "UTF8");
+			
+			assertThat(content, equalTo(decryptedContent));
+		
+		} catch(UnsupportedEncodingException uee) {
+			uee.printStackTrace();
+		}
+	}	
+	
+	
+	@Test
+	public void testEncrpytDecrypt_AllWhiteSpaceString() {
+		
+		try {
+			
+			String content = "    ";
+			
+			/*
+			 * Method under test
+			 */
+			byte[] encryptedContentBytes = this.cryptoService.encrypt(content);
+			
+			/*
+			 * Method under test
+			 */
+			byte[] decryptedContentBytes = this.cryptoService.decrypt(encryptedContentBytes);
+			
+			String decryptedContent = new String(decryptedContentBytes, "UTF8");
+			
+			assertThat(content, equalTo(decryptedContent));
+		
+		} catch(UnsupportedEncodingException uee) {
+			uee.printStackTrace();
+		}
+	}	
+	
+	
+	public void testEncrypt_String_Null_Parameter() {
 		
 		String content = null;
 		boolean caught = false;
@@ -79,15 +134,48 @@ public class PKCS8CryptoServiceTest extends TestCase {
 		 * Method under test
 		 */
 		try {
-			byte[] result = this.cryptoService.encrypt(content);
+			this.cryptoService.encrypt(content);
 		} catch (IllegalArgumentException iae) {
 			caught = true;
 		}
 		
 		assertTrue(caught);
+	}
+
+	
+
+	
+	public void testEncrypt_bytes_Null_Parameter() {
 		
+		byte[] contentBytes = null;
+		boolean caught = false;
+		/*
+		 * Method under test
+		 */
+		try {
+			this.cryptoService.encrypt(contentBytes);
+		} catch (IllegalArgumentException iae) {
+			caught = true;
+		}
+		
+		assertTrue(caught);
 	}
 	
 	
+	public void testDecrypt_bytes_Null_Parameter() {
+		
+		byte[] contentBytes = null;
+		boolean caught = false;
+		/*
+		 * Method under test
+		 */
+		try {
+			this.cryptoService.decrypt(contentBytes);
+		} catch (IllegalArgumentException iae) {
+			caught = true;
+		}
+		
+		assertTrue(caught);
+	}
 
 } // END PKCS8CryptoServiceTest Class

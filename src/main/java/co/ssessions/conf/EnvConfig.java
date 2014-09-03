@@ -17,7 +17,7 @@ public class EnvConfig {
 		// Intentionally empty constructor
 	}
 	
-	public PropertiesConfiguration getInstance() {
+	public final PropertiesConfiguration getInstance() {
 		PropertiesConfiguration proxy = singleton;
 		if (proxy == null) {
 			synchronized (this) {
@@ -31,7 +31,7 @@ public class EnvConfig {
 	}
 	
 	
-	public void nullifySingleton() {
+	public final void nullifySingleton() {
 		singleton = null;
 	}
 	

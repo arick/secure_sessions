@@ -144,11 +144,15 @@ public class DefaultSecureSessionsStoreBase extends SecureSessionsStoreBase {
 		this.keys.clear();
 	}
 
-	
 	@Override
 	public void save(Session session) throws IOException {
 		
 		HttpSession httpSession = session.getSession();
+		this.save(httpSession);
+	}
+	
+	
+	public void save(HttpSession httpSession) throws IOException {
 		
 		SessionKey sessionKey = new SessionKey(this.applicationId, httpSession.getId());
 		

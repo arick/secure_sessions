@@ -40,7 +40,6 @@ public abstract class SecureSessionsModule extends AbstractModule {
 	}
 	
 	public void doBindCryptoService() {
-		
 		bind(CryptoService.class).to(PKCS8CryptoService.class);
 	}
 	

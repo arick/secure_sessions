@@ -36,5 +36,10 @@ public class CouchbaseClientHolderTest extends TestCase {
 		assertTrue(client instanceof CouchbaseClient);
 
 	}
+	
+	
+	
+	
+	
 
 }

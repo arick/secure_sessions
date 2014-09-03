@@ -3,8 +3,6 @@ package co.ssessions.crypto;
 import javax.validation.constraints.NotNull;
 import javax.validation.executable.ValidateOnExecution;
 
-import org.hibernate.validator.constraints.NotBlank;
-
 /**
  * Defines the interface that encryption schemes must implement.
  * 
@@ -19,7 +17,7 @@ public interface CryptoService {
 	 * @return a byte array representing the encrypted content 
 	 */
 	@ValidateOnExecution
-	public abstract byte[] encrypt(@NotBlank String content);
+	public abstract byte[] encrypt(@NotNull String content);
 	
 	
 	/**

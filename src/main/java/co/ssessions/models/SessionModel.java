@@ -4,7 +4,7 @@ import java.util.Date;
 
 public class SessionModel {
 	
-	public static String BASE64 = "BASE64";
+	public final static String BASE64 = "BASE64";
 	
 	private String privateKeyId;
 	private String data;

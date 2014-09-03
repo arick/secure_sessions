@@ -23,8 +23,6 @@ import javax.crypto.NoSuchPaddingException;
 import javax.validation.constraints.NotNull;
 import javax.validation.executable.ValidateOnExecution;
 
-import org.hibernate.validator.constraints.NotBlank;
-
 import co.ssessions.crypto.CryptoService;
 import co.ssessions.crypto.config.CryptoServiceConfiguration;
 
@@ -39,15 +37,11 @@ public class PKCS8CryptoService implements CryptoService {
 	private PrivateKey privateKey;
 	private PublicKey publicKey;
 	
+	
 	@Inject
 	public PKCS8CryptoService(CryptoServiceConfiguration<String, String> cryptoServiceConfiguration) {
 		this.cryptoServiceConfiguration = cryptoServiceConfiguration;
 		this.privateKeyFilePath = this.cryptoServiceConfiguration.get("crypto.privateKeyFilePath");
-		this.init();
-	}
-	
-	
-	public void init() {
 		this.privateKey = this.getPrivateKeyFromFile(this.privateKeyFilePath);
 		this.publicKey = this.extractPublicKeyFromPrivateKey(this.privateKey);
 	}
@@ -174,7 +168,7 @@ public class PKCS8CryptoService implements CryptoService {
 	 */
 	@ValidateOnExecution
 	@Override
-	public byte[] encrypt (@NotBlank String content) {
+	public byte[] encrypt (@NotNull String content) {
 		
 		byte[] encryptedContentBytes = this.encrypt(content.getBytes());
 		return encryptedContentBytes;

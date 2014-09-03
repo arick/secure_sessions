@@ -1,6 +1,12 @@
 package co.ssessions.managers;
 
+import java.io.IOException;
+
+import javax.servlet.http.HttpSession;
+
 import org.apache.catalina.LifecycleException;
+import org.apache.catalina.Pipeline;
+import org.apache.catalina.Valve;
 import org.apache.catalina.session.PersistentManagerBase;
 import org.apache.commons.configuration.PropertiesConfiguration;
 import org.apache.commons.lang3.StringUtils;
@@ -15,10 +21,10 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 
-public class SecureSessionManagager extends PersistentManagerBase {
+public class SecureSessionsManagager extends PersistentManagerBase {
 	
 
-	protected static final String name = "SecureSessionManagager";
+	protected static final String name = "SecureSessionsManagager";
     protected static final String info = name + "/1.0";
 	
     
@@ -38,7 +44,7 @@ public class SecureSessionManagager extends PersistentManagerBase {
     protected PropertiesConfiguration config;
     
     
-	public SecureSessionManagager() {
+	public SecureSessionsManagager() {
 		this.setSaveOnRestart(true);
 		
 	}
@@ -104,8 +110,51 @@ public class SecureSessionManagager extends PersistentManagerBase {
 		this.secureSessionStoreBase.setApplicationId(this.applicationId);
 		this.setStore(this.secureSessionStoreBase);
 		
+		
+		// Add this manager to any SecureSessionsManagagerAware Valves in the pipeline
+		
+		if ((this.getContainer() != null) 
+				&& (this.getContainer().getPipeline() != null)
+				&& (this.getContainer().getPipeline().getValves() != null)
+				&& (this.getContainer().getPipeline().getValves().length > 0)) {
+			
+			Pipeline pipeline = this.getContainer().getPipeline();
+			
+			for(Valve valve : pipeline.getValves()) {
+				if (valve instanceof SecureSessionsManagerAware) {
+					((SecureSessionsManagerAware) valve).setSecureSessionsManagager(this);
+				}
+			}
+		}
+		
+		
 	}
-
+	
+	public void loadSession(String sessionId) {
+		
+		try {
+			this.secureSessionStoreBase.load(sessionId);
+		} catch (ClassNotFoundException e) {
+			// TODO: Handle exception more gracefully
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO: Handle exception more gracefully
+			e.printStackTrace();
+		}
+		
+	}
+	
+	public void saveSession(HttpSession httpSession) {
+		
+		try {
+			this.secureSessionStoreBase.save(httpSession);
+		} catch (IOException e) {
+			// TODO: Handle exception more gracefully
+			e.printStackTrace();
+		}
+	}
+	
+	
 	@Override
 	public String getInfo() {
 		return info;
@@ -141,4 +190,4 @@ public class SecureSessionManagager extends PersistentManagerBase {
 		this.configFilePath = configFilePath;
 	}
 	
-} // END SecureSessionManagager Class
+} // END SecureSessionsManagager Class

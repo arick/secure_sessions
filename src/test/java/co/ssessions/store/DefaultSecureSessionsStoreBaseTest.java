@@ -1,4 +1,4 @@
-package co.ssessions.couchbase;
+package co.ssessions.store;
 
 import java.io.File;
 
@@ -6,19 +6,27 @@ import junit.framework.TestCase;
 
 import org.apache.catalina.Context;
 import org.apache.catalina.LifecycleException;
+import org.apache.catalina.Pipeline;
+import org.apache.catalina.core.StandardPipeline;
 import org.apache.catalina.startup.Tomcat;
 import org.junit.Test;
 
 import co.ssessions.conf.EnvConfig;
+import co.ssessions.couchbase.CouchbaseClientHolder;
+import co.ssessions.couchbase.CouchbaseSecureSessionsManager;
+import co.ssessions.couchbase.CouchbaseSecureSessionsModule;
 import co.ssessions.crypto.CryptoService;
 import co.ssessions.store.SecureSessionsStoreBase;
 import co.ssessions.testSupport.embeddedTomcat.DatePrintServlet;
+import co.ssessions.valve.SecureSessionsValve;
+import co.ssessions.valve.Test2Valve;
+import co.ssessions.valve.TestValve;
 
 import com.couchbase.client.CouchbaseClient;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 
-public class CouchbaseSessionStoreTest extends TestCase {
+public class DefaultSecureSessionsStoreBaseTest extends TestCase {
 
 	CouchbaseClient couchbaseClient = null;
 	CryptoService cryptoService = null;
@@ -56,12 +64,22 @@ public class CouchbaseSessionStoreTest extends TestCase {
 			File base = new File(EnvConfig.getSafe("embedded_tomcat.baseFolder"));
 
 			Context rootCtx = tomcat.addContext("/app", base.getAbsolutePath());
-
-			CouchbaseSecureSessionManager couchbaseSecureSessionManager = new CouchbaseSecureSessionManager();
+			
+			Pipeline pipe = rootCtx.getPipeline();
+			TestValve valve = new TestValve();
+			pipe.addValve(valve);
+			SecureSessionsValve ssValve = new SecureSessionsValve();
+			pipe.addValve(ssValve);
+			Test2Valve test2Valve = new Test2Valve();
+			pipe.addValve(test2Valve);
+			
+			
+			CouchbaseSecureSessionsManager couchbaseSecureSessionManager = new CouchbaseSecureSessionsManager();
 
 			couchbaseSecureSessionManager.setConfigFilePath(EnvConfig.getSafe("tomcat_manager_conf.propertiesFilePath"));
 
 			rootCtx.setManager(couchbaseSecureSessionManager);
+			
 
 			Tomcat.addServlet(rootCtx, "dateServlet", new DatePrintServlet());
 
@@ -81,8 +99,8 @@ public class CouchbaseSessionStoreTest extends TestCase {
 
 		this.couchbaseClient = null;
 		this.cryptoService = null;
-		
 		this.secureSessionsStoreBase = null;
+		
 		EnvConfig.clearSingleton();
 
 	} // END tearDown Method
@@ -92,7 +110,7 @@ public class CouchbaseSessionStoreTest extends TestCase {
 	@Test
 	public void testLoad() {
 
-//		this.tomcatSetup();
+		this.tomcatSetup();
 
 		 /*
 		 * Fixtures
@@ -139,7 +157,7 @@ public class CouchbaseSessionStoreTest extends TestCase {
 //		 Container mockedContainer = mock(Container.class);
 //		 when(mockedContainer.getLoader()).thenReturn(mockedLoader);
 //		
-//		 Manager mockedManager = mock(CouchbaseSecureSessionManager.class);
+//		 Manager mockedManager = mock(CouchbaseSecureSessionsManager.class);
 //		 when(mockedManager.getContainer()).thenReturn(mockedContainer);
 //		
 //		 ServletContext servletContext = new MockServletContext();
@@ -361,7 +379,7 @@ public class CouchbaseSessionStoreTest extends TestCase {
 	// Container mockedContainer = mock(Container.class);
 	// when(mockedContainer.getLoader()).thenReturn(mockedLoader);
 	//
-	// Manager mockedManager = mock(CouchbaseSecureSessionManager.class);
+	// Manager mockedManager = mock(CouchbaseSecureSessionsManager.class);
 	// when(mockedManager.getContainer()).thenReturn(mockedContainer);
 	//
 	// ServletContext servletContext = new MockServletContext();
@@ -394,4 +412,4 @@ public class CouchbaseSessionStoreTest extends TestCase {
 	//
 	// } // END testRemove Method
 
-} // END CouchbaseSessionStoreTest Class
+} // END DefaultSecureSessionsStoreBaseTest Class

@@ -29,7 +29,7 @@ public class CouchbaseClientHolder {
 	}
 	
 	
-	public CouchbaseClient getInstance() {
+	public final CouchbaseClient getInstance() {
 		CouchbaseClient proxy = singleton;
 		if (proxy == null) {
 			synchronized (this) {
@@ -43,7 +43,7 @@ public class CouchbaseClientHolder {
 	}
 	
 	
-	public void nullifySingleton() {
+	public final void nullifySingleton() {
 		singleton = null;
 	}
 	
