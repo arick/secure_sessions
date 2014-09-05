@@ -6,6 +6,7 @@ import javax.servlet.http.HttpSession;
 
 import org.apache.catalina.LifecycleException;
 import org.apache.catalina.Pipeline;
+import org.apache.catalina.Session;
 import org.apache.catalina.Valve;
 import org.apache.catalina.session.PersistentManagerBase;
 import org.apache.commons.configuration.PropertiesConfiguration;
@@ -21,10 +22,10 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 
-public class SecureSessionsManagager extends PersistentManagerBase {
+public class SecureSessionsManager extends PersistentManagerBase {
 	
 
-	protected static final String name = "SecureSessionsManagager";
+	protected static final String name = "SecureSessionsManager";
     protected static final String info = name + "/1.0";
 	
     
@@ -33,8 +34,8 @@ public class SecureSessionsManagager extends PersistentManagerBase {
     /*
      * Values injected from the context.xml file
      */
-    protected int maximumInactiveInterval = 60 * 60 * 2; //2 hours
-    protected int maximumIdleBackup = 30; // 30 seconds
+    protected int maximumInactiveInterval = -1;
+    protected int maximumIdleBackup = -1;
     protected String applicationId;
     protected String managerType = SecureSessionsConstants.DEFAULT_MANAGER_TYPE;
     private String configFilePath;
@@ -44,7 +45,7 @@ public class SecureSessionsManagager extends PersistentManagerBase {
     protected PropertiesConfiguration config;
     
     
-	public SecureSessionsManagager() {
+	public SecureSessionsManager() {
 		this.setSaveOnRestart(true);
 		
 	}
@@ -58,7 +59,48 @@ public class SecureSessionsManagager extends PersistentManagerBase {
 	@Override
 	protected void initInternal() throws LifecycleException {
 		
+		/*
+		 *  We DO want to enforce this property.  It requires that anything added to the session 
+		 *  must be serializable.
+		 *  From: Tomcat documentation: ".any user attributes added to a 
+		 *        session controlled by this Manager must be Serializable."
+		 */
 		this.setDistributable(true);
+		
+		
+		/*
+		 * Since sessions are discouraged from being stored in memory we do not 
+		 * want to reload sessions when the server restarts
+		 */
+		this.setSaveOnRestart(false);
+		
+		
+		/*
+		 * We want the manager to ignore backing up sessions as the SecureSessionsValve will
+		 * manually backup the session to the store
+		 */
+		this.setMaxIdleBackup(-1);
+		
+		
+		/*
+		 * We want the manager to not automatically swap out the sessions from memory as 
+		 * the valve will manually swap out the sessions from memory after each request.
+		 */
+		this.setMinIdleSwap(-1);
+		this.setMaxIdleSwap(-1);
+		
+		
+		/*
+		 * We want an unlimited number of active sessions at any given time.
+		 */
+		this.setMaxActiveSessions(-1);
+		
+		
+		/*
+		 * Sessions do not expire.
+		 */
+		this.setMaxInactiveInterval(-1);
+		
 		
 		this.logger = this.getContainer().getLogger();
 		
@@ -79,19 +121,19 @@ public class SecureSessionsManagager extends PersistentManagerBase {
 		}
 		
 		
-		int maxInactiveIntervalFromConfig = this.config.getInt("ss.maxInactiveInterval");
-		if (maxInactiveIntervalFromConfig < 0) {
-			this.setMaxInactiveInterval(this.maximumInactiveInterval); 
-		} else {
-			this.setMaxInactiveInterval(maxInactiveIntervalFromConfig); 
-		}
-		
-		
-		int maxIdleBackupFromConfig = this.config.getInt("ss.maxIdleBackup");
-		if (maxIdleBackupFromConfig < 0) {
-			throw new RuntimeException("In manager properties file located at " + this.configFilePath + "  ss.maxIdleBackup is null!");
-		}
-		this.setMaxIdleBackup(this.maximumIdleBackup);
+//		int maxInactiveIntervalFromConfig = this.config.getInt("ss.maxInactiveInterval");
+//		if (maxInactiveIntervalFromConfig < 0) {
+//			this.setMaxInactiveInterval(this.maximumInactiveInterval); 
+//		} else {
+//			this.setMaxInactiveInterval(maxInactiveIntervalFromConfig); 
+//		}
+//		
+//		
+//		int maxIdleBackupFromConfig = this.config.getInt("ss.maxIdleBackup");
+//		if (maxIdleBackupFromConfig < 0) {
+//			throw new RuntimeException("In manager properties file located at " + this.configFilePath + "  ss.maxIdleBackup is null!");
+//		}
+//		this.setMaxIdleBackup(this.maximumIdleBackup);
 		
 		
 		String managerTypeFromConfig = this.config.getString("ss.managerType");
@@ -130,6 +172,21 @@ public class SecureSessionsManagager extends PersistentManagerBase {
 		
 	}
 	
+	
+	
+	public void swapOut(String sessionId) {
+		Session session;
+		try {
+			session = this.findSession(sessionId);
+			if (session != null) {
+				this.swapOut(session);
+			}
+		} catch (IOException e) {
+			// TODO: Handle exception more gracefully
+			e.printStackTrace();
+		}
+	}
+	
 	public void loadSession(String sessionId) {
 		
 		try {
@@ -153,6 +210,13 @@ public class SecureSessionsManagager extends PersistentManagerBase {
 			e.printStackTrace();
 		}
 	}
+	
+	
+	
+	/* **********************************************************************
+	 * Getters and Setters
+	 * **********************************************************************/
+	
 	
 	
 	@Override
@@ -190,4 +254,4 @@ public class SecureSessionsManagager extends PersistentManagerBase {
 		this.configFilePath = configFilePath;
 	}
 	
-} // END SecureSessionsManagager Class
+} // END SecureSessionsManager Class

@@ -3,7 +3,7 @@ package co.ssessions.managers;
 
 public interface SecureSessionsManagerAware {
 
-	public abstract void setSecureSessionsManagager(SecureSessionsManagager secureSessionsManagager);
+	public abstract void setSecureSessionsManagager(SecureSessionsManager secureSessionsManagager);
 	
 	
 }

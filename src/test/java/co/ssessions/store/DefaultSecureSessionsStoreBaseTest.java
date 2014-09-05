@@ -108,7 +108,7 @@ public class DefaultSecureSessionsStoreBaseTest extends TestCase {
 	@Test
 	public void testLoad() {
 
-		this.tomcatSetup();
+//		this.tomcatSetup();
 
 		 /*
 		 * Fixtures

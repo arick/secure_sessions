@@ -11,9 +11,6 @@ public abstract class SecureSessionsStoreBase extends StoreBase {
 	protected String applicationId;
 	
 	
-	public abstract void save(HttpSession httpSession) throws IOException;
-	
-	
 	public String getApplicationId() {
 		return this.applicationId;
 	}
@@ -23,4 +20,16 @@ public abstract class SecureSessionsStoreBase extends StoreBase {
 		this.applicationId = applicationId;
 	}
 
+	
+	/**
+	 * 
+	 * 
+	 * @param httpSession
+	 * @throws IOException
+	 */
+	public abstract void save(HttpSession httpSession) throws IOException;
+	
+	
+	
+	
 }

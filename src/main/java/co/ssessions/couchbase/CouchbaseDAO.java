@@ -88,6 +88,10 @@ public class CouchbaseDAO implements SecureSessionsDAO {
 
 		String sessionModelJson = (String) this.couchbaseClient.get(sessionKey.toString());
 		
+		if (sessionModelJson == null) {
+			return null;
+		}
+		
 		Gson gson = new GsonBuilder().registerTypeAdapter(Date.class, new DateJsonDeserializer()).create();
 		SessionModel sessionModel = (SessionModel) gson.fromJson(sessionModelJson, SessionModel.class); 
 		
