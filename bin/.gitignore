@@ -1,1 +1,12 @@
+/.DS_Store
 /co/
+/common_env.properties
+/couchbase_manager_conf.properties
+/crypto/
+/default_env.properties
+/embedded_tomcat/
+/local_test_env.properties
+/local_webservice_remote_db_env.properties
+/tomcat_server_libs/
+/unit_test_env.properties
+/classes/

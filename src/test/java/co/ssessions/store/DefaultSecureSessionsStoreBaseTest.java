@@ -1,13 +1,19 @@
 package co.ssessions.store;
 
-import java.io.File;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.util.Map;
 
 import junit.framework.TestCase;
 
-import org.apache.catalina.Context;
-import org.apache.catalina.LifecycleException;
-import org.apache.catalina.Pipeline;
-import org.apache.catalina.startup.Tomcat;
+import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.protocol.HttpClientContext;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
 import org.junit.Test;
 
 import co.ssessions.conf.EnvConfig;
@@ -15,10 +21,11 @@ import co.ssessions.couchbase.CouchbaseClientHolder;
 import co.ssessions.couchbase.CouchbaseSecureSessionsManager;
 import co.ssessions.couchbase.CouchbaseSecureSessionsModule;
 import co.ssessions.crypto.CryptoService;
-import co.ssessions.testSupport.embeddedTomcat.DatePrintServlet;
 import co.ssessions.valve.SecureSessionsValve;
-import co.ssessions.valve.Test2Valve;
-import co.ssessions.valve.TestValve;
+import co.ssessions.web.LoadBalancer;
+import co.ssessions.web.TomcatServer;
+import co.ssessions.web.TomcatServerBuilder;
+import co.ssessions.web.servlet.SessionTestServlet;
 
 import com.couchbase.client.CouchbaseClient;
 import com.google.inject.Guice;
@@ -30,6 +37,7 @@ public class DefaultSecureSessionsStoreBaseTest extends TestCase {
 	CryptoService cryptoService = null;
 	Injector injector = null;
 	SecureSessionsStoreBase secureSessionsStoreBase = null;
+	LoadBalancer loadBalancer;
 
 	public void setUp() {
 		
@@ -55,52 +63,147 @@ public class DefaultSecureSessionsStoreBaseTest extends TestCase {
 	
 	private void tomcatSetup() {
 
+		System.out.println("Starting Tomcat Setup");
+		
+		this.loadBalancer = new LoadBalancer();
+		
+		TomcatServerBuilder builder = new TomcatServerBuilder();
+		
+		builder.setPortNumber(7070);
+		builder.setBaseFolder("src/test/resources/embedded_tomcat");
+		builder.setSecureSessionManagger(new CouchbaseSecureSessionsManager());
+		builder.setSecureSessionsValve(new SecureSessionsValve());
+		builder.setHttpServlet(new SessionTestServlet());
+		
+		Map<String, String> serverConfig1 = builder.startNewTomcatApplication();
+		this.loadBalancer.addServerConfig(serverConfig1);
+		System.out.println("URL 1: " + serverConfig1.get("URL"));
+//		
+//		
+//		
+//		builder.setPortNumber(8080);
+//		builder.setBaseFolder("src/test/resources/embedded_tomcat");
+//		builder.setSecureSessionManagger(new CouchbaseSecureSessionsManager());
+//		builder.setSecureSessionsValve(new SecureSessionsValve());
+//		builder.setHttpServlet(new SessionTestServlet());
+//		
+//		Map<String, String> serverConfig2 = builder.startNewTomcatApplication();
+//		this.loadBalancer.addServerConfig(serverConfig2);
+//		System.out.println("URL 2: " + serverConfig2.get("URL"));
+//		
+//		
+//		
+//		builder.setPortNumber(9090);
+//		builder.setSecureSessionManagger(new CouchbaseSecureSessionsManager());
+//		builder.setSecureSessionsValve(new SecureSessionsValve());
+//		builder.setHttpServlet(new SessionTestServlet());
+//		
+//		Map<String, String> serverConfig3 = builder.startNewTomcatApplication();
+//		this.loadBalancer.addServerConfig(serverConfig3);
+//		System.out.println("URL 3: " + serverConfig3.get("URL"));
+		
+		
+		
+		/*
+		 * Start the HTTP Queries
+		 */
+		
+		HttpClientContext httpClientContext = new HttpClientContext();
+		
+		CloseableHttpClient httpclient = HttpClients.createDefault();
+		
+	
+		HttpGet httpget = new HttpGet("http://localhost:7070/a");
+		
+		
+		
+		CloseableHttpResponse response = null;
 		try {
-			Tomcat tomcat = new Tomcat();
-			tomcat.setPort(8080);
-
-			File base = new File(EnvConfig.getSafe("embedded_tomcat.baseFolder"));
-
-			Context rootCtx = tomcat.addContext("/app", base.getAbsolutePath());
-			
-			Pipeline pipe = rootCtx.getPipeline();
-			TestValve valve = new TestValve();
-			pipe.addValve(valve);
-			SecureSessionsValve ssValve = new SecureSessionsValve();
-			pipe.addValve(ssValve);
-			Test2Valve test2Valve = new Test2Valve();
-			pipe.addValve(test2Valve);
+			response = httpclient.execute(httpget, httpClientContext);
 			
 			
-			CouchbaseSecureSessionsManager couchbaseSecureSessionManager = new CouchbaseSecureSessionsManager();
-
-			couchbaseSecureSessionManager.setConfigFilePath(EnvConfig.getSafe("tomcat_manager_conf.propertiesFilePath"));
-
-			rootCtx.setManager(couchbaseSecureSessionManager);
+			Reader errorReader = new InputStreamReader(response.getEntity().getContent());
+			BufferedReader errorBufferedReader = new BufferedReader(errorReader);
 			
-
-			Tomcat.addServlet(rootCtx, "dateServlet", new DatePrintServlet());
-
-			rootCtx.addServletMapping("/date", "dateServlet");
-
-			tomcat.start();
-			tomcat.getServer().await();
-
-		} catch (LifecycleException le) {
-			le.printStackTrace();
+			String errorLine = errorBufferedReader.readLine();
+			while (errorLine != null) {
+				
+				System.out.println(errorLine);
+				errorLine = errorBufferedReader.readLine();
+			}	
+			
+			
+			
+			response.close();
+		} catch (ClientProtocolException cpe) {
+			cpe.printStackTrace();
+		} catch (IOException ioe) {
+			ioe.printStackTrace();
+		} 
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		System.out.println("I'm sleepy....");
+		try {
+			Thread.sleep(10000000);
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
+		System.out.println("I'm awake....");
+		
+//		try {
+//			Tomcat tomcat = new Tomcat();
+//			tomcat.setPort(8080);
+//
+//			File base = new File(EnvConfig.getSafe("embedded_tomcat.baseFolder"));
+//
+//			Context rootCtx = tomcat.addContext("/app", base.getAbsolutePath());
+//			
+//			Pipeline pipe = rootCtx.getPipeline();
+//			TestValve valve = new TestValve();
+//			pipe.addValve(valve);
+//			SecureSessionsValve ssValve = new SecureSessionsValve();
+//			pipe.addValve(ssValve);
+//			Test2Valve test2Valve = new Test2Valve();
+//			pipe.addValve(test2Valve);
+//			
+//			
+//			CouchbaseSecureSessionsManager couchbaseSecureSessionManager = new CouchbaseSecureSessionsManager();
+//
+//			couchbaseSecureSessionManager.setConfigFilePath(EnvConfig.getSafe("tomcat_manager_conf.propertiesFilePath"));
+//
+//			rootCtx.setManager(couchbaseSecureSessionManager);
+//			
+//
+//			Tomcat.addServlet(rootCtx, "dateServlet", new DatePrintServlet());
+//
+//			rootCtx.addServletMapping("/date", "dateServlet");
+//
+//			tomcat.start();
+//			tomcat.getServer().await();
+//
+//		} catch (LifecycleException le) {
+//			le.printStackTrace();
+//		}
 
 	} // END tomcatSetup Method
 
 	
 	public void tearDown() {
-
+		
 		this.couchbaseClient = null;
 		this.cryptoService = null;
 		this.secureSessionsStoreBase = null;
 		
 		EnvConfig.clearSingleton();
-
+		
 	} // END tearDown Method
 
 	
