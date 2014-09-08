@@ -24,11 +24,28 @@ public class SessionTestServlet extends HttpServlet {
 			final HttpServletResponse response) throws ServletException, IOException {
 		
 		HttpSession httpSession = request.getSession(false);
-		httpSession.setAttribute("Tester", "Great!");
+//		httpSession.setAttribute("Tester", "Great!");
+		
+		
+		String queryString = request.getQueryString();
 		
 		
 		
 		response.setHeader("Host", "localhost");
+		response.getWriter().append("Query String: " + queryString + "\n\n");
+		
+		
+		StringBuffer b = new StringBuffer();
+		Enumeration<String> parameterNames = request.getParameterNames();
+		while (parameterNames.hasMoreElements()) {
+			String parameterName = parameterNames.nextElement();
+			Object parameterValue = request.getParameter(parameterName);
+			b.append(parameterName);
+			b.append(": ");
+			b.append(parameterValue);
+			b.append("\n");
+		}
+		response.getWriter().append("Parameters Values:\n" + b.toString() + "\n\n");
 		
 		
 		

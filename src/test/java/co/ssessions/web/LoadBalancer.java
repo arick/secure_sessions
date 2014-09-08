@@ -8,7 +8,7 @@ public class LoadBalancer {
 	
 	List<Map<String,String>> serverConfigs;
 	
-	int serverIndex = -1;
+	int serverIndex = 0;
 	
 	
 	
@@ -29,6 +29,11 @@ public class LoadBalancer {
 	
 	
 	public String getNextServerUrl() {
+		
+		if (this.serverConfigs.size() <= 0) {
+			throw new RuntimeException("ERROR: The list of servers is empty.");
+		}
+		
 		int tempIndex = this.serverIndex;
 		
 		if (this.serverIndex >= this.getMaxServerIndex()) {

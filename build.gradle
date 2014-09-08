@@ -22,6 +22,7 @@ sourceSets {
 dependencies {
 	
 	compile group:'org.apache.commons', name:'commons-lang3', version:'3.3.2'
+	compile group:'commons-lang', name:'commons-lang', version:'2.6'
 	compile group:'commons-configuration', name:'commons-configuration', version:'1.10'
 	
 	compile group:'com.google.code.gson', name:'gson', version:'2.3'
@@ -47,13 +48,18 @@ dependencies {
 	
 	compile group:'org.apache.logging.log4j', name: 'log4j-api', version: '2.0.1'
 	compile group:'org.apache.logging.log4j', name: 'log4j-core', version: '2.0.1'
-	compile group:'org.apache.tomcat', name: 'tomcat-catalina', version:'7.0.42'
+	compile group:'org.apache.tomcat', name: 'tomcat-catalina', version:'7.0.55'
 	
+	compile group:'org.apache.tomcat', name: 'tomcat-annotations-api', version:'7.0.55'
+	compile group:'org.apache.tomcat', name: 'tomcat-api', version:'7.0.55'
+	compile group:'org.apache.tomcat', name: 'tomcat-juli', version:'7.0.55'
+	compile group:'org.apache.tomcat', name: 'tomcat-servlet-api', version:'7.0.55'
 	
 	
 	testCompile group:'org.mockito', name: 'mockito-all', version:'1.9.5'
-	testCompile group:'org.apache.tomcat', name:'tomcat-util', version:'7.0.42'
-	testCompile group:'org.apache.tomcat.embed', name:'tomcat-embed-core', version:'7.0.54'
+	testCompile group:'org.apache.tomcat', name:'tomcat-util', version:'7.0.55'
+	testCompile group:'org.apache.tomcat.embed', name:'tomcat-embed-core', version:'7.0.55'
+	testCompile group:'org.apache.tomcat.embed', name:'tomcat-embed-el', version:'7.0.55'
 	
 }
 

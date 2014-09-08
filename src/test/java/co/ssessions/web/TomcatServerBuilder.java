@@ -1,13 +1,10 @@
 package co.ssessions.web;
 
-import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.io.PrintWriter;
 import java.io.Reader;
 import java.util.HashMap;
 import java.util.Map;
@@ -96,6 +93,7 @@ public class TomcatServerBuilder {
 				"src/test/resources/tomcat_server_libs/classmate-1.0.0.jar",
 				"src/test/resources/tomcat_server_libs/commons-codec-1.6.jar",
 				"src/test/resources/tomcat_server_libs/commons-configuration-1.10.jar",
+				"src/test/resources/tomcat_server_libs/commons-lang-2.6.jar",
 				"src/test/resources/tomcat_server_libs/commons-lang3-3.3.2.jar",
 				"src/test/resources/tomcat_server_libs/commons-logging-1.1.3.jar",
 				"src/test/resources/tomcat_server_libs/couchbase-client-1.4.4.jar",
@@ -107,6 +105,7 @@ public class TomcatServerBuilder {
 				"src/test/resources/tomcat_server_libs/httpclient-4.3.5.jar",
 				"src/test/resources/tomcat_server_libs/httpcore-4.3.2.jar",
 				"src/test/resources/tomcat_server_libs/httpcore-nio-4.3.jar",
+				"src/test/resources/tomcat_server_libs/javax.el-api-2.2.4.jar",
 				"src/test/resources/tomcat_server_libs/javax.inject-1.jar",
 				"src/test/resources/tomcat_server_libs/jboss-logging-3.1.3.GA.jar",
 				"src/test/resources/tomcat_server_libs/jettison-1.1.jar",
@@ -117,13 +116,19 @@ public class TomcatServerBuilder {
 				"src/test/resources/tomcat_server_libs/netty-3.5.5.Final.jar",
 				"src/test/resources/tomcat_server_libs/spymemcached-2.11.4.jar",
 				"src/test/resources/tomcat_server_libs/stax-api-1.0.1.jar",
-				"src/test/resources/tomcat_server_libs/tomcat-annotations-api-7.0.42.jar",
-				"src/test/resources/tomcat_server_libs/tomcat-api-7.0.42.jar",
-				"src/test/resources/tomcat_server_libs/tomcat-catalina-7.0.42.jar",
-				"src/test/resources/tomcat_server_libs/tomcat-embed-core-7.0.54.jar",
-				"src/test/resources/tomcat_server_libs/tomcat-juli-7.0.42.jar",
-				"src/test/resources/tomcat_server_libs/tomcat-servlet-api-7.0.42.jar",
-				"src/test/resources/tomcat_server_libs/tomcat-util-7.0.42.jar",
+				
+				
+				
+				"src/test/resources/tomcat_server_libs/tomcat-annotations-api-7.0.55.jar",
+				"src/test/resources/tomcat_server_libs/tomcat-api-7.0.55.jar",
+				"src/test/resources/tomcat_server_libs/tomcat-catalina-7.0.55.jar",
+				"src/test/resources/tomcat_server_libs/tomcat-embed-core-7.0.55.jar",
+				"src/test/resources/tomcat_server_libs/tomcat-juli-7.0.55.jar",
+				"src/test/resources/tomcat_server_libs/tomcat-servlet-api-7.0.55.jar",
+				"src/test/resources/tomcat_server_libs/tomcat-util-7.0.55.jar",
+				
+				
+				
 				"src/test/resources/tomcat_server_libs/validation-api-1.1.0.Final.jar"
 		};
 		
@@ -137,29 +142,29 @@ public class TomcatServerBuilder {
 		try {
 			process = Runtime.getRuntime().exec(execString);
 			
-			InputStream is = process.getInputStream();
-			InputStream errorStream = process.getErrorStream();
-			
-			Reader errorReader = new InputStreamReader(errorStream);
-			BufferedReader errorBufferedReader = new BufferedReader(errorReader);
-			
-			String errorLine = errorBufferedReader.readLine();
-			while (errorLine != null) {
-				
-				System.out.println(errorLine);
-				errorLine = errorBufferedReader.readLine();
-			}	
-			
-			
-			Reader r = new InputStreamReader(is);
-			BufferedReader br = new BufferedReader(r);
-			
-			String line = br.readLine();
-			while (line != null) {
-				
-				System.out.println(line);
-				line = br.readLine();
-			}	
+//			InputStream is = process.getInputStream();
+//			InputStream errorStream = process.getErrorStream();
+//			
+//			Reader errorReader = new InputStreamReader(errorStream);
+//			BufferedReader errorBufferedReader = new BufferedReader(errorReader);
+//			
+//			String errorLine = errorBufferedReader.readLine();
+//			while (errorLine != null) {
+//				
+//				System.out.println(errorLine);
+//				errorLine = errorBufferedReader.readLine();
+//			}	
+//			
+//			
+//			Reader r = new InputStreamReader(is);
+//			BufferedReader br = new BufferedReader(r);
+//			
+//			String line = br.readLine();
+//			while (line != null) {
+//				
+//				System.out.println(line);
+//				line = br.readLine();
+//			}	
 			
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
